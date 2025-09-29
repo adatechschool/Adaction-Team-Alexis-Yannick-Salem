@@ -6,7 +6,7 @@ import {Pool} from "pg"
 
 dotenv.config();
 
-const pool = new Pool({
+const db = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
 });
@@ -16,14 +16,23 @@ app.use(cors());
 app.use(express.json());
 
 
-const port = process.env.Port || 3000;
+const port = process.env.PORT || 3000;
 
 
-app.use('/',(req,res)=>{
-    res.send("hello world ")
+app.get('/',(req,res)=>{
+    res.json("hello world cc")
 })
 
-
+app.get('/ville',async (req,res)=>{
+  
+  try {
+    const result = await db.query('SELECT * FROM ville')
+    res.json(result.rows)
+  } catch (error) {
+    console.error("Erreur lors de la recupération des villes:", error)
+    res.status(500).json("Erreur serveur")
+  }
+})
 
 
 app.listen(port, ()=>{
