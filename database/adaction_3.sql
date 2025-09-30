@@ -90,3 +90,11 @@ RENAME COLUMN login TO username;
 
 ALTER TABLE "dechets"
 ADD icon TEXT; 
+
+ALTER TABLE dechets_collectes
+  ALTER COLUMN dechet_id DROP NOT NULL;
+
+-- creation d'un benevole random pour test
+-- SELECT * from benevoles
+-- join ville on benevoles.id_ville = ville.id
+-- join associations on association_id = associations.id
