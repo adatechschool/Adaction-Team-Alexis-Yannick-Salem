@@ -75,7 +75,7 @@ app.get("/Dechets", async (req, res) => {
 
 app.post("/Signup", async (req, res) => {
   try {
-    const { username, first_name,  password, id_ville} = req.body;
+    const { username, first_name,last_name,  password, id_ville} = req.body;
     if (!username || !password || !first_name) {
       return res
         .status(400)
@@ -91,8 +91,8 @@ app.post("/Signup", async (req, res) => {
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     const reslt = await db.query(
-      `INSERT INTO benevoles (username, password, first_name,  points_collectes,  id_ville, date_creation)
-      VALUES ('${username}', '${hashedPassword}', '${first_name}',  0,  ${id_ville}, current_timestamp)`);
+      `INSERT INTO benevoles (username, password, first_name,last_name,  points_collectes,  id_ville, date_creation)
+      VALUES ('${username}', '${hashedPassword}', '${first_name}','${last_name}',  0,  ${id_ville}, current_timestamp)`);
     res.status(201).json(reslt.rows[0]);
   } catch (error) {
     console.error("Erreur signup:", error);
