@@ -95,6 +95,10 @@ ALTER TABLE dechets_collectes
   ALTER COLUMN dechet_id DROP NOT NULL;
 
 -- creation d'un benevole random pour test
+
+-- INSERT INTO benevoles (username, password, first_name, last_name, points_collectes, association_id, id_ville, date_creation)
+-- VALUES ('supermarc74', 'lepetitchienkiko', 'Marc', 'Smith', 200, 1, 1, current_timestamp);
+
 -- SELECT * from benevoles
 -- join ville on benevoles.id_ville = ville.id
 -- join associations on association_id = associations.id
