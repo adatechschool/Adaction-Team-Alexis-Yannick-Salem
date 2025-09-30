@@ -87,3 +87,6 @@ ADD sigle text;
 
 ALTER TABLE "benevoles"
 RENAME COLUMN login TO username;
+
+ALTER TABLE "dechets"
+ADD icon TEXT; 
