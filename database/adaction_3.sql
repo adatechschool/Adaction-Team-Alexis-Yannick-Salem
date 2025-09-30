@@ -84,3 +84,6 @@ VALUES
 
 ALTER TABLE "associations"
 ADD sigle text;
+
+ALTER TABLE "benevoles"
+RENAME COLUMN login TO username;
