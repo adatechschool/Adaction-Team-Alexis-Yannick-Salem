@@ -67,13 +67,13 @@ ALTER TABLE "dechets_collectes" ADD CONSTRAINT "id_dechets_collectes_dechet" FOR
 INSERT INTO ville (name)
 VALUES
   ('Paris'), ('Amiens'), ('Rouen'), ('Reims'), ('Caen'),
-   ('Brest'), ('Rennes'), ('Le Mans'), ('Orléans'), ('Tours'), 
-   ('Nantes'), ('Metz'), ('Nancy'), ('Starsbourg'), ('Mulhouse'), 
-   ('Dijon'), ('Beançon'), ('Limoges'), ('Clermont-Ferrand'), ('Saint-Étienne'), 
-   ('Lyon'), ('Villeurbanne'), ('Annecy'), ('Bordeaux'), ('Toulourse'), 
-   ('Montpellier'), ('Nîmes'), ('Aix-en-Provence'), ('Marseille'), ('Toulon'), 
-   ('Nice'), ('Perpignan'), ('Grenoble'), ('Argenteuil'), ('Saint-Denis'), 
-   ('Boulogne-Billancourt'), ('Montreuil');
+  ('Brest'), ('Rennes'), ('Le Mans'), ('Orléans'), ('Tours'), 
+  ('Nantes'), ('Metz'), ('Nancy'), ('Strasbourg'), ('Mulhouse'), 
+  ('Dijon'), ('Besançon'), ('Limoges'), ('Clermont-Ferrand'), ('Saint-Étienne'), 
+  ('Lyon'), ('Villeurbanne'), ('Annecy'), ('Bordeaux'), ('Toulouse'), 
+  ('Montpellier'), ('Nîmes'), ('Aix-en-Provence'), ('Marseille'), ('Toulon'), 
+  ('Nice'), ('Perpignan'), ('Grenoble'), ('Argenteuil'), ('Saint-Denis'), 
+  ('Boulogne-Billancourt'), ('Montreuil');
 
 
 INSERT INTO dechets (name, score)
