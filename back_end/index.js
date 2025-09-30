@@ -22,7 +22,7 @@ const port = process.env.PORT || 3000;
 app.get('/',(req,res)=>{
     res.json("hello world cc")
 })
-
+// route ville
 app.get('/ville',async (req,res)=>{
   
   try {
@@ -33,7 +33,20 @@ app.get('/ville',async (req,res)=>{
     res.status(500).json("Erreur serveur")
   }
 })
+// route dechets
 
+app.get('/dechets', async(req,res)=>{
+
+  try {
+    const reslt = await db.query('SELECT name ,score, icon FROM dechets');
+    res.json(reslt.rows);
+    
+  } catch (error) {
+    console.error('Erreur lors de la recuperation des dechets',error);
+    res.status(500).json("Erreur serveur");
+
+  }
+})
 
 app.listen(port, ()=>{
     console.log(`Example app listening on port ${port}`)
