@@ -73,7 +73,7 @@ app.get("/Dechets", async (req, res) => {
 
 // route singup
 
-app.post("/Signup", async (req, res) => {
+app.post("/Signup/benevole", async (req, res) => {
   try {
     const { username, first_name, last_name, password, id_ville } = req.body;
     if (!username || !password || !first_name) {
