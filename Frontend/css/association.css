@@ -1,10 +1,9 @@
 /* Navbar styles */
 .navbar {
-    /*background-color: rgba(45, 106, 79, 0.95);*/
     border-radius: 15px 15px 0 0;
     padding: 1rem 2rem;
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
     position: fixed;
     bottom: 0;
@@ -15,6 +14,7 @@
 
 .nav-links {
     display: flex;
+    width: 100%;
     background-color: rgba(45, 106, 79, 0.80);
     border-radius: 15px;
     backdrop-filter: blur(10px);
@@ -23,12 +23,33 @@
 .nav-link {
     color: white;
     text-decoration: none;
+    display: flex;
+    flex-direction: column;
     justify-content: center;
+    align-items: center;
     padding: 0.5rem 1rem;
     border-radius: 15px;
-    width: 128px;
     height: 64px;
     transition: background-color 0.3s ease;
+    font-size: 0.9rem;
+    width: 100%;
+}
+
+.nav-link::before {
+    font-size: 1.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.nav-link[href="/associations/dashboard"]::before {
+    content: "📊";
+}
+
+.nav-link[href="/associations/benevoles"]::before {
+    content: "👥";
+}
+
+.nav-link.logout::before {
+    content: "🚪";
 }
 
 .nav-link:hover {
@@ -44,6 +65,77 @@
     text-align: center;
     color: white;
     margin: 2rem 0;
+}
+
+.dashboard-controls {
+    margin-bottom: 2rem;
+}
+
+.dashboard-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.dashboard-tab {
+    padding: 0.75rem 2rem;
+    border: none;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+}
+
+.dashboard-tab.active {
+    background-color: #2d6a4f;
+}
+
+.dashboard-section {
+    display: none;
+}
+
+.dashboard-section.active {
+    display: block;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.waste-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+    padding: 2rem;
+}
+
+.waste-card {
+    background-color: rgba(255, 255, 255, 0.95);
+    padding: 2rem;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.waste-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.waste-type {
+    color: #2d6a4f;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.waste-quantity {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #1b4332;
 }
 
 .dashboard-header h1, .benevoles-header h1 {
@@ -158,28 +250,7 @@ th {
     }
 
     .nav-link {
-        text-align: center;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
         font-size: 0.7rem;
-    }
-
-    /* Add icons for mobile navigation */
-    .nav-link::before {
-        font-size: 1.5rem;
-    }
-
-    .nav-link[href="/associations/dashboard"]::before {
-        content: "📊";
-    }
-
-    .nav-link[href="/associations/benevoles"]::before {
-        content: "👥";
-    }
-
-    .nav-link.logout::before {
-        content: "🚪";
     }
 
     .benevoles-actions {

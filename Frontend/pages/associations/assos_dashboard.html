@@ -25,19 +25,34 @@
             <p class="welcome-text">Bienvenue sur votre espace association</p>
         </section>
 
+        <section class="dashboard-controls">
+            <div class="dashboard-tabs">
+                <button class="dashboard-tab active" data-tab="global">Globale</button>
+                <button class="dashboard-tab" data-tab="wastes">Déchets</button>
+            </div>
+        </section>
+
         <section class="dashboard-content">
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <h3>Bénévoles Actifs</h3>
-                    <p class="stat-number">0</p>
+            <div id="global-section" class="dashboard-section active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Bénévoles Actifs</h3>
+                        <p class="stat-number">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Collectes Réalisées</h3>
+                        <p class="stat-number">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Déchets Collectés</h3>
+                        <p class="stat-number">0</p>
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <h3>Collectes Réalisées</h3>
-                    <p class="stat-number">0</p>
-                </div>
-                <div class="stat-card">
-                    <h3>Déchets Collectés</h3>
-                    <p class="stat-number">0 kg</p>
+            </div>
+
+            <div id="wastes-section" class="dashboard-section">
+                <div class="waste-stats-grid">
+                    <!-- Waste type cards will be dynamically inserted here -->
                 </div>
             </div>
         </section>
