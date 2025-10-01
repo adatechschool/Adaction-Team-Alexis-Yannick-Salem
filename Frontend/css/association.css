@@ -1,6 +1,7 @@
 /* Navbar styles */
 .navbar {
-    background-color: rgba(45, 106, 79, 0.95);
+    /*background-color: rgba(45, 106, 79, 0.95);*/
+    border-radius: 15px 15px 0 0;
     padding: 1rem 2rem;
     display: flex;
     justify-content: space-between;
@@ -10,26 +11,23 @@
     left: 0;
     right: 0;
     z-index: 1000;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
-    backdrop-filter: blur(10px);
-}
-
-.nav-brand {
-    color: white;
-    font-size: 1.5rem;
-    font-weight: bold;
 }
 
 .nav-links {
     display: flex;
-    gap: 2rem;
+    background-color: rgba(45, 106, 79, 0.80);
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
 }
 
 .nav-link {
     color: white;
     text-decoration: none;
+    justify-content: center;
     padding: 0.5rem 1rem;
-    border-radius: 4px;
+    border-radius: 15px;
+    width: 128px;
+    height: 64px;
     transition: background-color 0.3s ease;
 }
 
@@ -39,10 +37,6 @@
 
 .nav-link.active {
     background-color: rgba(255, 255, 255, 0.2);
-}
-
-.logout {
-    color: #ffa07a;
 }
 
 /* Dashboard styles */
@@ -168,14 +162,12 @@ th {
         display: flex;
         flex-direction: column;
         align-items: center;
-        font-size: 0.9rem;
-        padding: 0.5rem;
+        font-size: 0.7rem;
     }
 
     /* Add icons for mobile navigation */
     .nav-link::before {
         font-size: 1.5rem;
-        margin-bottom: 0.25rem;
     }
 
     .nav-link[href="/associations/dashboard"]::before {
