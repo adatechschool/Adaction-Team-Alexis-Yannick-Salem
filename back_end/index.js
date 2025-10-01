@@ -3,7 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { Pool } from "pg";
 import bcrypt from "bcrypt";
-
+import { error } from "console";
 
 dotenv.config();
 
@@ -38,7 +38,7 @@ app.get("/Associations", async (req, res) => {
 app.get("/Benevole", async (req, res) => {
   try {
     const reslt = await db.query(`SELECT * FROM benevoles `);
-    res.status(200).json(reslt.rows)
+    res.status(200).json(reslt.rows);
   } catch (error) {
     console.error(
       "Erreur lors de la recuperation des donnees benevoles",
@@ -75,7 +75,7 @@ app.get("/Dechets", async (req, res) => {
 
 app.post("/Signup", async (req, res) => {
   try {
-    const { username, first_name,last_name,  password, id_ville} = req.body;
+    const { username, first_name, last_name, password, id_ville } = req.body;
     if (!username || !password || !first_name) {
       return res
         .status(400)
@@ -92,10 +92,39 @@ app.post("/Signup", async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     const reslt = await db.query(
       `INSERT INTO benevoles (username, password, first_name,last_name,  points_collectes,  id_ville, date_creation)
-      VALUES ('${username}', '${hashedPassword}', '${first_name}','${last_name}',  0,  ${id_ville}, current_timestamp)`);
+      VALUES ('${username}', '${hashedPassword}', '${first_name}','${last_name}',  0,  ${id_ville}, current_timestamp)`
+    );
     res.status(201).json(reslt.rows[0]);
   } catch (error) {
     console.error("Erreur signup:", error);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+app.post("/Login", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password)
+      return res
+        .status(400)
+        .json({ error: "username et password sont requis" });
+
+    const userRes = await db.query(
+      "SELECT id, username, first_name, last_name, password FROM benevoles WHERE username = $1",
+      [username]
+    );
+
+    const user = userRes.rows[0];
+    if (!user) return res.status(400).json({ error: "identifiants invalide" });
+
+    const check = await bcrypt.compare(password, user.password);
+    if (!check) {
+      return res.status(400).json({ error: "mot de passe invalide" });
+    } else {
+      return res.status(200).json({first_name: user.first_name, username:user.username, last_name:user.last_name});
+    }
+  } catch (error) {
+    console.error("POST /login", error);
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
