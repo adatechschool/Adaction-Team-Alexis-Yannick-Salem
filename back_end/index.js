@@ -71,7 +71,36 @@ app.get("/Dechets", async (req, res) => {
   }
 });
 
-// route singup
+// route singup associations
+app.post("/Signup/associations", async (req, res) => {
+  try {
+    const { username, name,  password, sigle} = req.body;
+    if (!username || !password || !name) {
+      return res
+        .status(400)
+        .json({ error: "tous les champs doit etre remplis" });
+    }
+    const check = await db.query(
+      "SELECT id FROM associations WHERE username = $1",
+      [username]
+    );
+    if (check.rows.length > 0)
+      return res.status(400).json({ error: "Nom deja existant" });
+
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    const reslt = await db.query(
+      `INSERT INTO associations (username, password, name,sigle, date_creation)
+      VALUES ('${username}', '${hashedPassword}','${sigle}' ,'${name}', current_timestamp)`
+    );
+    res.status(201).json(reslt.rows[0]);
+  } catch (error) {
+    console.error("Erreur signup:", error);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+// route singup benevole
 
 app.post("/Signup/benevole", async (req, res) => {
   try {
@@ -113,6 +142,7 @@ app.post("/Login", async (req, res) => {
       "SELECT id, username, first_name, last_name, password FROM benevoles WHERE username = $1",
       [username]
     );
+    
 
     const user = userRes.rows[0];
     if (!user) return res.status(400).json({ error: "identifiants invalide" });
