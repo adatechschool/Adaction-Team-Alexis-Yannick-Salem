@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gestion des Bénévoles - EcoCollect</title>
+    <link rel="stylesheet" href="../../css/index.css">
+    <link rel="stylesheet" href="../../css/association.css">
+    <script src="../../js/association.js" defer></script>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">EcoCollect</div>
+        <div class="nav-links">
+            <a href="/associations/dashboard" class="nav-link">Dashboard</a>
+            <a href="/associations/benevoles" class="nav-link active">Bénévoles</a>
+            <a href="/" class="nav-link logout">Déconnexion</a>
+        </div>
+    </nav>
+
+    <main class="container">
+        <section class="benevoles-header">
+            <h1>Gestion des Bénévoles</h1>
+            <p class="section-description">Gérez vos bénévoles et leurs activités</p>
+        </section>
+
+        <section class="benevoles-content">
+            <div class="benevoles-list">
+                <div class="benevoles-actions">
+                    <button class="action-btn">Ajouter un Bénévole</button>
+                    <input type="search" placeholder="Rechercher un bénévole..." class="search-input">
+                </div>
+                <div class="benevoles-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nom</th>
+                                <th>Ville</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Les bénévoles seront ajoutés ici dynamiquement -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+</body>
+
+</html>

@@ -7,6 +7,36 @@ document.addEventListener('DOMContentLoaded', () => {
     const signupCity = document.getElementById('signup-city');
     const citiesList = document.getElementById('cities-list');
 
+    // Function to clear form fields
+    function clearForm(form) {
+        form.reset();
+        const inputs = form.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.value = '';
+        });
+    }
+
+    // Clear forms on page load
+    clearForm(loginForm);
+    clearForm(signupForm);
+    citiesList.innerHTML = '';
+
+    // Clear forms when switching tabs
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            authForms.forEach(form => {
+                clearForm(form);
+            });
+        });
+    });
+
+    // Clear forms before unload (page change/reload)
+    window.addEventListener('beforeunload', () => {
+        clearForm(loginForm);
+        clearForm(signupForm);
+        citiesList.innerHTML = '';
+    });
+
     // Debounce function
     function debounce(func, wait) {
         let timeout;
@@ -80,21 +110,60 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Login attempt:', { username, password });
     });
 
+    // Handle signup type switching
+    const signupTypeBtns = document.querySelectorAll('.signup-tab-btn');
+    const signupSections = document.querySelectorAll('.signup-section');
+
+    signupTypeBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const signupType = btn.dataset.signup;
+            
+            // Update active states
+            signupTypeBtns.forEach(b => b.classList.remove('active'));
+            signupSections.forEach(s => s.classList.remove('active'));
+            
+            btn.classList.add('active');
+            document.getElementById(`${signupType}-signup`).classList.add('active');
+
+            // Clear form fields when switching
+            clearForm(signupForm);
+        });
+    });
+
     // Handle signup form submission
     signupForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        const name = document.getElementById('signup-name').value;
-        const username = document.getElementById('signup-username').value;
-        const city = document.getElementById('signup-city').value;
-        const password = document.getElementById('signup-password').value;
-        const confirmPassword = document.getElementById('signup-confirm-password').value;
+        const activeSection = document.querySelector('.signup-section.active');
+        const formType = activeSection.querySelector('.submit-btn').dataset.type;
 
-        if (password !== confirmPassword) {
-            alert('Les mots de passe ne correspondent pas!');
-            return;
+        if (formType === 'benevole') {
+            const name = document.getElementById('signup-name').value;
+            const username = document.getElementById('signup-username').value;
+            const city = document.getElementById('signup-city').value;
+            const password = document.getElementById('signup-password').value;
+            const confirmPassword = document.getElementById('signup-confirm-password').value;
+
+            if (password !== confirmPassword) {
+                alert('Les mots de passe ne correspondent pas!');
+                return;
+            }
+
+            // TODO: Add actual signup logic here
+            console.log('Bénévole signup attempt:', { name, username, city, password });
+        } else {
+            const name = document.getElementById('signup-asso-name').value;
+            const sigle = document.getElementById('signup-asso-sigle').value;
+            const username = document.getElementById('signup-asso-username').value;
+            const password = document.getElementById('signup-asso-password').value;
+            const confirmPassword = document.getElementById('signup-asso-confirm-password').value;
+
+            if (password !== confirmPassword) {
+                alert('Les mots de passe ne correspondent pas!');
+                return;
+            }
+
+            // TODO: Add actual signup logic here
+            console.log('Association signup attempt:', { name, sigle, username, password });
         }
-
-        // TODO: Add actual signup logic here
-        console.log('Signup attempt:', { name, username, city, password });
     });
 });

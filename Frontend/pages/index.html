@@ -20,35 +20,61 @@
     <section class="auth-section">
       <div class="auth-container">
         <div class="forms-wrapper">
-          <form id="login-form" class="auth-form active">
+          <form id="login-form" class="auth-form active" autocomplete="off">
             <div class="form-group">
-              <input type="text" id="login-username" placeholder="Nom d'utilisateur" required>
+              <input type="text" id="login-username" placeholder="Nom d'utilisateur" required autocomplete="off">
             </div>
             <div class="form-group">
-              <input type="password" id="login-password" placeholder="Mot de passe" required>
+              <input type="password" id="login-password" placeholder="Mot de passe" required autocomplete="off">
             </div>
             <button type="submit" class="submit-btn">Se connecter</button>
           </form>
 
-          <form id="signup-form" class="auth-form">
-            <div class="form-group">
-              <input type="text" id="signup-name" placeholder="Prénom" required>
+          <form id="signup-form" class="auth-form" autocomplete="off">
+            <div class="signup-type-tabs">
+              <button type="button" class="signup-tab-btn active" data-signup="benevole">Bénévole</button>
+              <button type="button" class="signup-tab-btn" data-signup="association">Association</button>
             </div>
-            <div class="form-group">
-              <input type="text" id="signup-username" placeholder="Nom d'utilisateur" required>
+
+            <div id="benevole-signup" class="signup-section active">
+              <div class="form-group">
+                <input type="text" id="signup-name" placeholder="Prénom" required autocomplete="off">
+              </div>
+              <div class="form-group">
+                <input type="text" id="signup-username" placeholder="Nom d'utilisateur" required autocomplete="off">
+              </div>
+              <div class="form-group city-group">
+                <input type="text" id="signup-city" list="cities-list" placeholder="Entrer ou rechercher une ville" required autocomplete="off">
+                <datalist id="cities-list">
+                </datalist>
+              </div>
+              <div class="form-group">
+                <input type="password" id="signup-password" placeholder="Mot de passe" required autocomplete="off">
+              </div>
+              <div class="form-group">
+                <input type="password" id="signup-confirm-password" placeholder="Confirmer le mot de passe" required autocomplete="off">
+              </div>
+              <button type="submit" class="submit-btn" data-type="benevole">S'inscrire comme Bénévole</button>
             </div>
-            <div class="form-group city-group">
-              <input type="text" id="signup-city" list="cities-list" placeholder="Entrer ou rechercher une ville" required>
-              <datalist id="cities-list">
-              </datalist>
+
+            <div id="association-signup" class="signup-section">
+              <div class="form-group">
+                <input type="text" id="signup-asso-name" placeholder="Nom de l'association" required autocomplete="off">
+              </div>
+              <div class="form-group">
+                <input type="text" id="signup-asso-sigle" placeholder="Sigle" required autocomplete="off">
+              </div>
+              <div class="form-group">
+                <input type="text" id="signup-asso-username" placeholder="Nom d'utilisateur" required autocomplete="off">
+              </div>
+              <div class="form-group">
+                <input type="password" id="signup-asso-password" placeholder="Mot de passe" required autocomplete="off">
+              </div>
+              <div class="form-group">
+                <input type="password" id="signup-asso-confirm-password" placeholder="Confirmer le mot de passe" required autocomplete="off">
+              </div>
+              <button type="submit" class="submit-btn" data-type="association">S'inscrire comme Association</button>
             </div>
-            <div class="form-group">
-              <input type="password" id="signup-password" placeholder="Mot de passe" required>
-            </div>
-            <div class="form-group">
-              <input type="password" id="signup-confirm-password" placeholder="Confirmer le mot de passe" required>
-            </div>
-            <button type="submit" class="submit-btn">S'inscrire</button>
           </form>
         </div>
         

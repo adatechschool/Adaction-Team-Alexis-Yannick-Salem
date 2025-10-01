@@ -20,10 +20,20 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // This allows serving CSS, JavaScript, images, and other static assets
 app.use(express.static(join(__dirname)));
 
-// Define route handler for the root path ('/')
-// When users access the root URL, send them the index.html page
+// Define routes
+// Home page
 app.get('/', (req, res) => {
     res.sendFile(join(__dirname, 'pages', 'index.html'));
+});
+
+// Association Dashboard
+app.get('/associations/dashboard', (req, res) => {
+    res.sendFile(join(__dirname, 'pages', 'associations', 'assos_dashboard.html'));
+});
+
+// Association Benevoles Management
+app.get('/associations/benevoles', (req, res) => {
+    res.sendFile(join(__dirname, 'pages', 'associations', 'assos_benevolesManagement.html'));
 });
 
 // Start the server and listen for incoming connections
