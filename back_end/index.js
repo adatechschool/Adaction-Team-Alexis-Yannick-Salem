@@ -3,7 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { Pool } from "pg";
 import bcrypt from "bcrypt";
-import { error } from "console";
+
 
 dotenv.config();
 
@@ -74,17 +74,22 @@ app.get("/Dechets", async (req, res) => {
 // route singup associations
 app.post("/Signup/associations", async (req, res) => {
   try {
-    const { username, name,  password, sigle} = req.body;
+    const { username, name, password, sigle } = req.body;
     if (!username || !password || !name) {
       return res
         .status(400)
         .json({ error: "tous les champs doit etre remplis" });
     }
     const check = await db.query(
-      "SELECT id FROM associations WHERE username = $1",
+      `SELECT (
+         EXISTS(SELECT 1 FROM benevoles WHERE username = $1)
+         OR EXISTS(SELECT 1 FROM associations WHERE username = $1)
+       ) AS taken`,
       [username]
     );
-    if (check.rows.length > 0)
+    console.log(typeof(check.rows))
+    console.log(check.rows)
+    if (check.rows[0].taken)
       return res.status(400).json({ error: "Nom deja existant" });
 
     const saltRounds = 10;
@@ -111,10 +116,13 @@ app.post("/Signup/benevole", async (req, res) => {
         .json({ error: "tous les champs doit etre remplis" });
     }
     const check = await db.query(
-      "SELECT id FROM benevoles WHERE username = $1",
+      `SELECT (
+         EXISTS(SELECT 1 FROM benevoles WHERE username = $1)
+         OR EXISTS(SELECT 1 FROM associations WHERE username = $1)
+       ) AS taken`,
       [username]
     );
-    if (check.rows.length > 0)
+    if (check.rows[0].taken)
       return res.status(400).json({ error: "Nom deja existant" });
 
     const saltRounds = 10;
@@ -138,21 +146,49 @@ app.post("/Login", async (req, res) => {
         .status(400)
         .json({ error: "username et password sont requis" });
 
-    const userRes = await db.query(
+    const userBen = await db.query(
       "SELECT id, username, first_name, last_name, password FROM benevoles WHERE username = $1",
       [username]
     );
-    
 
-    const user = userRes.rows[0];
-    if (!user) return res.status(400).json({ error: "identifiants invalide" });
-
-    const check = await bcrypt.compare(password, user.password);
-    if (!check) {
-      return res.status(400).json({ error: "mot de passe invalide" });
-    } else {
-      return res.status(200).json({first_name: user.first_name, username:user.username, last_name:user.last_name});
+    if (userBen.rows.length > 0) {
+      const user = userBen.rows[0];
+      const check = await bcrypt.compare(password, user.password);
+      if (!check) {
+        return res.status(400).json({ error: "mot de passe invalide" });
+      } else {
+        return res
+          .status(200)
+          .json({
+            first_name: user.first_name,
+            username: user.username,
+            last_name: user.last_name,
+          });
+      }
     }
+
+    const userAss = await db.query(
+      "SELECT id, username, name, sigle, password FROM associations WHERE username = $1",
+      [username]
+    );
+
+    if (userAss.rows.length > 0) {
+      const user = userAss.rows[0];
+      const check = await bcrypt.compare(password, user.password);
+      if (!check) {
+        return res.status(400).json({ error: "mot de passe invalide" });
+      } else {
+        return res
+          .status(200)
+          .json({
+            name: user.name,
+            username: user.username,
+            sigle: user.sigle,
+          });
+      }
+    }
+
+    res.status(400).json({ error: "identifiants invalide" });
   } catch (error) {
     console.error("POST /login", error);
     res.status(500).json({ error: "Erreur serveur" });
