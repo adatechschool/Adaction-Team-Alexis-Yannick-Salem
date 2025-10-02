@@ -3,7 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { Pool } from "pg";
 import bcrypt from "bcrypt";
-
+import { error } from "console";
 
 dotenv.config();
 
@@ -63,10 +63,47 @@ app.get("/Ville", async (req, res) => {
 
 app.get("/Dechets", async (req, res) => {
   try {
-    const reslt = await db.query("SELECT name ,score, icon FROM dechets");
-    res.json(reslt.rows);
+    const { idVille, dateDebut, dateFin } = req.body;
+    if (!idVille || !dateDebut || !dateFin)
+      return res.status(400).json({ error: "tous les champs sont requis" });
+    console.log(idVille, dateDebut, dateFin);
+    const reslt = await db.query(`
+      SELECT DISTINCT
+        d.icon,
+        d.name AS dechet_name,
+        c.date,
+        v.name AS ville_name,
+        b.id AS benevoles_id,
+        SUM(dc.dechet_quantite) OVER (PARTITION BY d.id) AS total_dechet
+      FROM dechets_collectes dc
+      JOIN dechets   d ON d.id = dc.dechet_id
+      JOIN benevoles b ON dc.id_benevole = b.id
+      JOIN collectes c ON c.id = dc.id_collecte
+      JOIN ville     v ON v.id = c.id_ville
+      WHERE (c.id_ville = '${idVille}')
+        AND (c.date BETWEEN '${dateDebut}' AND '${dateFin}')
+      ORDER BY c.date, v.name, d.name`);
+    res.status(200).json(reslt.rows);
   } catch (error) {
     console.error("Erreur lors de la recuperation des dechets", error);
+    res.status(500).json("Erreur serveur");
+  }
+});
+// route historique
+app.get("/Historique/benevole", async (req, res) => {
+  try {
+    const {idBenevole} = req.body;
+    console.log(idBenevole)
+    const reslt =
+      await db.query(`SELECT DISTINCT c.id AS collecte_id, c.date, b.id, v.name AS ville_name
+FROM collectes c
+JOIN benevoles b ON c.benevole_responsable = b.id
+JOIN ville v ON c.id_ville = v.id
+JOIN dechets_collectes dc ON c.id = dc.id_collecte
+WHERE b.id = ${idBenevole}`);
+    res.status(200).json(reslt.rows);
+  } catch (error) {
+    console.error("Erreur lors de la recuperation de l'historique", error);
     res.status(500).json("Erreur serveur");
   }
 });
@@ -87,8 +124,8 @@ app.post("/Signup/associations", async (req, res) => {
        ) AS taken`,
       [username]
     );
-    console.log(typeof(check.rows))
-    console.log(check.rows)
+    console.log(typeof check.rows);
+    console.log(check.rows);
     if (check.rows[0].taken)
       return res.status(400).json({ error: "Nom deja existant" });
 
@@ -157,13 +194,11 @@ app.post("/Login", async (req, res) => {
       if (!check) {
         return res.status(400).json({ error: "mot de passe invalide" });
       } else {
-        return res
-          .status(200)
-          .json({
-            first_name: user.first_name,
-            username: user.username,
-            last_name: user.last_name,
-          });
+        return res.status(200).json({
+          first_name: user.first_name,
+          username: user.username,
+          last_name: user.last_name,
+        });
       }
     }
 
@@ -178,13 +213,11 @@ app.post("/Login", async (req, res) => {
       if (!check) {
         return res.status(400).json({ error: "mot de passe invalide" });
       } else {
-        return res
-          .status(200)
-          .json({
-            name: user.name,
-            username: user.username,
-            sigle: user.sigle,
-          });
+        return res.status(200).json({
+          name: user.name,
+          username: user.username,
+          sigle: user.sigle,
+        });
       }
     }
 
