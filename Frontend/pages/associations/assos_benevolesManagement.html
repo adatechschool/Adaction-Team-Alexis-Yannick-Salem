@@ -8,47 +8,255 @@
     <link rel="stylesheet" href="../../css/index.css">
     <link rel="stylesheet" href="../../css/associations/benevoles.css">
     <script src="../../js/associations/benevoles.js" defer></script>
+    <script src="../../js/associations/collectes.js" defer></script>
 </head>
 
 <body>
     <nav class="navbar">
         <div class="nav-links">
-            <a href="/associations/dashboard" class="nav-link">Tableau de Bord</a>
+            <a href="/associations/dashboard" class="nav-link">Dashboard</a>
             <a href="/associations/benevoles" class="nav-link active">Bénévoles</a>
             <a href="/" class="nav-link logout">Déconnexion</a>
         </div>
     </nav>
 
     <main class="container">
-        <section class="benevoles-header">
-            <h1>Gestion des Bénévoles</h1>
-            <p class="section-description">Gérez vos bénévoles et leurs activités</p>
+        <section class="management-header">
+            <h1>Gestion de l'Association</h1>
+            <div class="section-tabs">
+                <button type="button" class="section-tab active" data-section="benevoles">Bénévoles</button>
+                <button type="button" class="section-tab" data-section="collectes">Collectes</button>
+            </div>
         </section>
 
-        <section class="benevoles-content">
+        <section id="benevoles-section" class="management-section active">
+            <p class="section-description">Gérez vos bénévoles et leurs activités</p>
             <div class="benevoles-list">
                 <div class="benevoles-actions">
                     <button class="action-btn">Ajouter un Bénévole</button>
-                    <input type="search" placeholder="Rechercher un bénévole..." class="search-input">
+                    <input type="search" placeholder="Rechercher le nom d'un bénévole..." class="search-input">
                 </div>
-                <div class="benevoles-table">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Nom</th>
-                                <th>Ville</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Les bénévoles seront ajoutés ici dynamiquement -->
-                        </tbody>
-                    </table>
+                <div class="benevoles-cards">
+                    <!-- Les cartes des bénévoles seront ajoutées ici dynamiquement -->
+                </div>
+            </div>
+        </section>
+
+        <section id="collectes-section" class="management-section">
+            <p class="section-description">Gérez vos collectes et suivez leurs résultats</p>
+            <div class="collectes-list">
+                <div class="collectes-actions">
+                    <button class="action-btn">Ajouter une Collecte</button>
+                    <input type="search" placeholder="Rechercher une collecte..." class="search-input">
+                </div>
+                <div class="collectes-cards">
+                    <!-- Les cartes des collectes seront ajoutées ici dynamiquement -->
                 </div>
             </div>
         </section>
     </main>
+
+    <!-- Popup for adding new benevole -->
+    <div id="addBenevolePopup" class="popup-overlay">
+        <div class="popup-content">
+            <div class="profile-header">
+                <button type="button" class="cancel-btn floating-close" onclick="closePopup()">
+                    <span class="close-icon">✕</span>
+                </button>
+                <div class="avatar-container">
+                    <div class="avatar">
+                        <span class="avatar-icon">👤</span>
+                    </div>
+                </div>
+                <h2>Ajouter un Bénévole</h2>
+            </div>
+            <form id="addBenevoleForm">
+                <div class="form-group">
+                    <label for="username">Nom d'utilisateur</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="first_name">Prénom</label>
+                    <input type="text" id="first_name" name="first_name" required>
+                </div>
+                <div class="form-group">
+                    <label for="last_name">Nom</label>
+                    <input type="text" id="last_name" name="last_name" required>
+                </div>
+                <div class="form-group">
+                    <label for="city">Ville</label>
+                    <div class="city-search-container">
+                        <input type="text" id="citySearch" name="citySearch" placeholder="Rechercher une ville..." autocomplete="off">
+                        <input type="hidden" id="city" name="city" required>
+                        <div id="cityResults" class="city-results"></div>
+                    </div>
+                </div>
+                <div class="popup-actions">
+                    <button type="submit" class="action-btn">Ajouter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Popup for viewing/editing benevole profile -->
+    <div id="profileBenevolePopup" class="popup-overlay">
+        <div class="popup-content">
+            <div class="profile-header">
+                <button type="button" class="cancel-btn floating-close" onclick="closeProfilePopup()">
+                    <span class="close-icon">✕</span>
+                </button>
+                <div class="avatar-container">
+                    <div class="avatar">
+                        <span class="avatar-icon">👤</span>
+                    </div>
+                </div>
+                <button type="button" class="edit-btn floating-action" id="editProfileBtn">Modifier</button>
+                <button type="submit" class="save-btn floating-action" id="saveProfileBtn" style="display: none;">Enregistrer</button>
+            </div>
+            <form id="profileBenevoleForm">
+                <div class="form-group username-group">
+                    <label for="profile-username">Nom d'utilisateur</label>
+                    <input type="text" id="profile-username" name="username" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label for="profile-first-name">Prénom</label>
+                        <input type="text" id="profile-first-name" name="first_name" required>
+                    </div>
+                    <div class="form-group half">
+                        <label for="profile-last-name">Nom</label>
+                        <input type="text" id="profile-last-name" name="last_name" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="city-search-container">
+                        <label for="profile-citySearch">Ville</label>
+                        <input type="text" id="profile-citySearch" name="citySearch" placeholder="Rechercher une ville..." autocomplete="off">
+                        <input type="hidden" id="profile-city" name="city" required>
+                        <div id="profile-cityResults" class="city-results"></div>
+                    </div>
+                </div>
+                <div class="form-group points-group">
+                    <div class="points-display">
+                        <label for="profile-points">Points Récoltés</label>
+                        <span class="points-icon">🏆</span>
+                        <input type="number" id="profile-points" name="points" readonly>
+                    </div>
+                </div>
+                <div class="popup-actions">
+                    <button type="button" class="delete-btn" id="deleteProfileBtn">Supprimer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Popup for adding new collecte -->
+    <div id="addCollectePopup" class="popup-overlay">
+        <div class="popup-content">
+            <div class="profile-header">
+                <button type="button" class="cancel-btn floating-close" onclick="closeCollectePopup()">
+                    <span class="close-icon">✕</span>
+                </button>
+                <div class="collecte-header-content">
+                    <h2>Ajouter une Collecte</h2>
+                </div>
+            </div>
+            <form id="addCollecteForm">
+                <div class="form-group">
+                    <label for="collecte-name">Nom de la collecte</label>
+                    <input type="text" id="collecte-name" name="name" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label for="collecte-date">Date</label>
+                        <input type="date" id="collecte-date" name="date" required>
+                    </div>
+                    <div class="form-group half">
+                        <label for="collecte-time">Heure</label>
+                        <input type="time" id="collecte-time" name="time" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="collecte-location">Lieu</label>
+                    <input type="text" id="collecte-location" name="location" required>
+                </div>
+                <div class="form-group">
+                    <label for="collecte-description">Description</label>
+                    <textarea id="collecte-description" name="description" rows="3" required></textarea>
+                </div>
+                <div class="popup-actions">
+                    <button type="submit" class="action-btn">Ajouter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Popup for viewing/editing collecte details -->
+    <div id="profileCollectePopup" class="popup-overlay">
+        <div class="popup-content">
+            <div class="profile-header">
+                <button type="button" class="cancel-btn floating-close" onclick="closeCollecteProfilePopup()">
+                    <span class="close-icon">✕</span>
+                </button>
+                <div class="collecte-header-content">
+                    <h2 id="collecte-title">Nom de la collecte</h2>
+                    <span class="collecte-date">📅 <span id="collecte-datetime"></span></span>
+                </div>
+                <button type="button" class="edit-btn floating-action" id="editCollecteBtn">Modifier</button>
+                <button type="submit" class="save-btn floating-action" id="saveCollecteBtn" style="display: none;">Enregistrer</button>
+            </div>
+            <form id="profileCollecteForm">
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label for="profile-collecte-date">Date</label>
+                        <input type="date" id="profile-collecte-date" name="date" required>
+                    </div>
+                    <div class="form-group half">
+                        <label for="profile-collecte-time">Heure</label>
+                        <input type="time" id="profile-collecte-time" name="time" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="profile-collecte-location">Lieu</label>
+                    <input type="text" id="profile-collecte-location" name="location" required>
+                </div>
+                <div class="form-group">
+                    <label for="profile-collecte-description">Description</label>
+                    <textarea id="profile-collecte-description" name="description" rows="3" required></textarea>
+                </div>
+                <div class="collecte-status">
+                    <h3>État de la collecte</h3>
+                    <div class="status-info">
+                        <div class="status-item">
+                            <span class="status-label">Statut:</span>
+                            <span class="status-value" id="collecte-status">À venir</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Bénévoles inscrits:</span>
+                            <span class="status-value" id="collecte-participants">0</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="collecte-results" style="display: none;">
+                    <h3>Résultats de la collecte</h3>
+                    <div class="results-info">
+                        <div class="result-item">
+                            <span class="result-label">Déchets collectés:</span>
+                            <input type="number" id="collecte-waste" name="waste" class="result-input" readonly>
+                            <span class="unit">kg</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">Points distribués:</span>
+                            <input type="number" id="collecte-points" name="points" class="result-input" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="popup-actions">
+                    <button type="button" class="delete-btn" id="deleteCollecteBtn">Supprimer</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </body>
 
 </html>
