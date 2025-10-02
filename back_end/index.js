@@ -92,8 +92,8 @@ app.get("/Dechets", async (req, res) => {
 // route historique
 app.get("/Historique/benevole", async (req, res) => {
   try {
-    const {idBenevole} = req.body;
-    console.log(idBenevole)
+    const { idBenevole } = req.body;
+    console.log(idBenevole);
     const reslt =
       await db.query(`SELECT DISTINCT c.id AS collecte_id, c.date, b.id, v.name AS ville_name
 FROM collectes c
@@ -227,6 +227,28 @@ app.post("/Login", async (req, res) => {
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
+// update points collectes
+app.patch('/Benevoles/points', async (req, res) => {
+  try {
+    
+    const { id,points } = req.body;
+    
+
+    const reslt = await db.query(
+      `UPDATE benevoles
+       SET points_collectes = COALESCE(points_collectes,0) + ${points}
+       WHERE id = ${id}`
+      
+    );
+    
+    res.json(reslt.rows[0]);
+  } catch (Erreur) {
+    console.error("impossible de mettre a jour les points", Erreur);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
