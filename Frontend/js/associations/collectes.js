@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
             time: "14:00",
             location: "Parc des Buttes-Chaumont",
             description: "Nettoyage collectif du parc et ses environs",
+            responsable: "Jean Dupont",
             status: "À venir",
             participants: 5,
             waste: null,
@@ -20,12 +21,31 @@ document.addEventListener('DOMContentLoaded', () => {
             time: "09:00",
             location: "Plage de la Pointe Rouge",
             description: "Ramassage des déchets sur la plage",
+            responsable: "Marie Curie",
             status: "Terminé",
             participants: 12,
             waste: 45,
             points: 90
         }
     ];
+
+    // Function to populate the responsable select options
+    function populateResponsableSelect(selectElement) {
+        // Get benevoles from the existing data in benevoles.js
+        const benevoles = window.benevoles || [
+            { name: 'Jean Dupont' },
+            { name: 'Marie Curie' },
+            { name: 'Paul Martin' }
+        ];
+
+        selectElement.innerHTML = '<option value="">Sélectionner un bénévole</option>';
+        benevoles.forEach(benevole => {
+            const option = document.createElement('option');
+            option.value = benevole.name;
+            option.textContent = benevole.name;
+            selectElement.appendChild(option);
+        });
+    }
 
     // Function to populate the cards with collectes data
     function displayCollectes(collectesList) {
@@ -43,6 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="collecte-name">${collecte.name}</div>
                     <div class="collecte-datetime">${formatDateTime(collecte.date, collecte.time)}</div>
                     <div class="collecte-location">${collecte.location}</div>
+                    <div class="collecte-responsable">👤 ${collecte.responsable}</div>
                 </div>
                 <div class="card-actions">
                     <button class="action-button view-btn" data-index="${index}">
@@ -71,7 +92,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const searchTerm = e.target.value.toLowerCase();
         const filteredCollectes = collectes.filter(collecte => 
             collecte.name.toLowerCase().includes(searchTerm) ||
-            collecte.location.toLowerCase().includes(searchTerm)
+            collecte.location.toLowerCase().includes(searchTerm) ||
+            collecte.responsable.toLowerCase().includes(searchTerm)
         );
         displayCollectes(filteredCollectes);
     });
@@ -84,6 +106,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Show popup when clicking the add button
     addCollecteButton.addEventListener('click', () => {
         addCollectePopup.style.display = 'flex';
+        // Populate responsable select
+        populateResponsableSelect(document.getElementById('collecte-responsable'));
     });
 
     // Close popup function
@@ -103,6 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
             time: addCollecteForm.time.value,
             location: addCollecteForm.location.value,
             description: addCollecteForm.description.value,
+            responsable: addCollecteForm.responsable.value,
             status: "À venir",
             participants: 0,
             waste: null,
@@ -135,6 +160,11 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('collecte-title').textContent = collecte.name;
         document.getElementById('collecte-datetime').textContent = formatDateTime(collecte.date, collecte.time);
         
+        // Populate and set responsable select
+        const responsableSelect = document.getElementById('profile-collecte-responsable');
+        populateResponsableSelect(responsableSelect);
+        responsableSelect.value = collecte.responsable;
+        
         // Fill form with collecte data
         profileCollecteForm.date.value = collecte.date;
         profileCollecteForm.time.value = collecte.time;
@@ -158,7 +188,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Set all inputs to readonly initially
         Array.from(profileCollecteForm.elements).forEach(input => {
             if (input.type !== 'button' && input.type !== 'submit') {
-                input.readOnly = true;
+                if (input.tagName.toLowerCase() === 'select') {
+                    input.disabled = true;
+                } else {
+                    input.readOnly = true;
+                }
             }
         });
 
@@ -182,7 +216,11 @@ document.addEventListener('DOMContentLoaded', () => {
         Array.from(profileCollecteForm.elements).forEach(input => {
             if (input.type !== 'button' && input.type !== 'submit' && 
                 !input.classList.contains('result-input')) {
-                input.readOnly = false;
+                if (input.tagName.toLowerCase() === 'select') {
+                    input.disabled = false;
+                } else {
+                    input.readOnly = false;
+                }
             }
         });
 
@@ -205,6 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 time: profileCollecteForm.time.value,
                 location: profileCollecteForm.location.value,
                 description: profileCollecteForm.description.value,
+                responsable: profileCollecteForm.responsable.value,
                 name: document.getElementById('collecte-title').textContent,
                 status: document.getElementById('collecte-status').textContent,
                 participants: parseInt(document.getElementById('collecte-participants').textContent),
@@ -222,7 +261,11 @@ document.addEventListener('DOMContentLoaded', () => {
             // 4. Lock all fields
             Array.from(profileCollecteForm.elements).forEach(input => {
                 if (input.type !== 'button' && input.type !== 'submit') {
-                    input.readOnly = true;
+                    if (input.tagName.toLowerCase() === 'select') {
+                        input.disabled = true;
+                    } else {
+                        input.readOnly = true;
+                    }
                 }
             });
             
@@ -232,9 +275,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 6. Update display
             displayCollectes(collectes);
-
-            // 7. Close popup
-            closeCollecteProfilePopup();
 
         } catch (error) {
             // Handle any errors that occur during save

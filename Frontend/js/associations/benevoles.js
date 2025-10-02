@@ -270,9 +270,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // 6. Update display
             displayBenevoles(benevoles);
 
-            // 7. Close popup
-            closeProfilePopup();
-
         } catch (error) {
             // Handle any errors that occur during save
             console.error('Error saving benevole:', error);
