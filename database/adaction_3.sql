@@ -102,3 +102,6 @@ ALTER TABLE dechets_collectes
 -- SELECT * from benevoles
 -- join ville on benevoles.id_ville = ville.id
 -- join associations on association_id = associations.id
+
+ALTER TABLE associations ADD COLUMN date_creation timestamp;
+ALTER TABLE associations ADD COLUMN username TEXT, ADD COLUMN password TEXT;
