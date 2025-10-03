@@ -92,7 +92,7 @@ ALTER TABLE "dechets"
 ADD icon TEXT; 
 
 ALTER TABLE dechets_collectes
-  ALTER COLUMN dechet_id DROP NOT NULL;
+ALTER COLUMN dechet_id DROP NOT NULL;
 
 -- creation d'un benevole random pour test
 
