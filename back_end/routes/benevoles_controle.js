@@ -57,11 +57,9 @@ router.post("/signup", async (req, res) => {
       `,
       [username]
     );
-
-    if (check.rows.length > 0)
-
+    if (check.rows.length > 0) {
       return res.status(400).json({ error: "Nom deja existant" });
-
+    }
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     const reslt = await db.query(
