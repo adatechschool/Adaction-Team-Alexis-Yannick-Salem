@@ -1,3 +1,8 @@
+// Function declared in global scope to be accessible from HTML
+function closeDetailsPopup() {
+    document.getElementById('collecteDetailsPopup').style.display = 'none';
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // Update active nav link based on current page
     const currentPath = window.location.pathname;
@@ -88,12 +93,12 @@ function createCollecteCard(collecte) {
     card.innerHTML = `
         <div class="collecte-info">
             <h3 class="collecte-name">${collecte.title}</h3>
-            <span class="collecte-datetime">📅 ${formatDate(collecte.date)}</span>
-            <span class="collecte-location">📍 ${collecte.location}</span>
-            <span class="collecte-responsable">👤 ${collecte.responsable}</span>
+            <span class="collecte-datetime">${formatDate(collecte.date)}</span>
+            <span class="collecte-location">${collecte.location}</span>
+            <span class="collecte-responsable">${collecte.responsable}</span>
         </div>
         <div class="card-actions">
-            <button type="button" class="view-btn">Voir détails</button>
+            <button type="button" class="action-btn view-btn">Voir détails</button>
         </div>
     `;
     card.querySelector('.view-btn').addEventListener('click', () => openCollecteDetails(collecte));
@@ -157,11 +162,14 @@ function openCollecteDetails(collecte) {
         wasteResults.style.display = 'none';
     }
 
-    popup.style.display = 'block';
+    popup.style.display = 'flex';
 }
 
 function closeDetailsPopup() {
-    collecteDetailsPopup.style.display = 'none';
+    const popup = document.getElementById('collecteDetailsPopup');
+    if (popup) {
+        popup.style.display = 'none';
+    }
 }
 
 // Toggle participation in a collecte
