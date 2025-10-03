@@ -198,8 +198,159 @@ body {
 
 .benevole-info {
     display: flex;
+}
+
+/* Popup styles */
+.popup-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 0;
+}
+
+.popup-content {
+    background-color: white;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 600px;
+    height: 100%;
+    max-height: 100vh;
+    position: relative;
+    animation: popup-appear 0.3s ease-out;
+    display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+}
+
+@media screen and (min-width: 768px) {
+    .popup-overlay {
+        padding: 20px;
+    }
+    
+    .popup-content {
+        height: 90vh;
+        max-height: 90vh;
+        border-radius: 12px;
+    }
+}
+
+@media screen and (max-width: 767px) {
+    .popup-content {
+        border-radius: 0;
+        height: 100vh;
+    }
+
+    .profile-header {
+        padding: 15px;
+    }
+
+    .profile-header h2 {
+        font-size: 1.2rem;
+    }
+
+    .collecte-details {
+        padding: 15px;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .popup-actions {
+        padding: 15px;
+        padding-bottom: calc(15px + env(safe-area-inset-bottom));
+    }
+}
+
+@keyframes popup-appear {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.profile-header {
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+    position: relative;
+}
+
+.profile-header h2 {
+    font-size: 1.5rem;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.collecte-header-content {
+    padding-right: 40px;
+}
+
+.collecte-date {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.floating-close {
+    position: absolute;
+    right: 15px;
+    top: 15px;
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 5px;
+    color: #666;
+    transition: color 0.2s ease;
+}
+
+.floating-close:hover {
+    color: #333;
+}
+
+.collecte-details {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.collecte-details .form-group {
+    margin-bottom: 20px;
+}
+
+.collecte-details .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.collecte-details .form-group div {
+    font-size: 1rem;
+    color: #333;
+    padding: 8px 0;
+}
+
+.popup-actions {
+    padding: 20px;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Animation for popup appearance */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 .benevole-name {
@@ -551,6 +702,7 @@ body {
 .collecte-date {
     font-size: 1.1rem;
     opacity: 0.9;
+    color: white;
 }
 
 .collecte-info {

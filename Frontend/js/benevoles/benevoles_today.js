@@ -50,13 +50,8 @@ document.addEventListener('DOMContentLoaded', () => {
             date: new Date().toISOString(),
             location: "Parc de la Ville",
             responsable: "Jean Martin",
-            status: "completed",
-            results: {
-                metal: 3.2,
-                carton: 4.5,
-                plastique: 2.8,
-                autres: 1.1
-            }
+            status: "in-progress",
+            results: null
         }
     ];
 
@@ -117,15 +112,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span class="collecte-datetime">${formatDate(collecte.date)}</span>
                 <span class="collecte-location">${collecte.location}</span>
             </div>
-            <div class="waste-cards readonly">
-                ${Object.entries(collecte.results).map(([type, quantity]) => `
-                    <div class="waste-card">
-                        <span class="waste-type">${type}</span>
-                        <span class="waste-quantity">${quantity}</span>
-                    </div>
-                `).join('')}
+            <div class="card-actions">
+                <button type="button" class="action-btn">Voir les résultats</button>
             </div>
         `;
+        card.querySelector('.action-btn').addEventListener('click', () => openResultsDetailsPopup(collecte));
         return card;
     }
 
@@ -148,6 +139,10 @@ document.addEventListener('DOMContentLoaded', () => {
         resultsForm.reset();
     }
 
+    window.closeResultsDetailsPopup = function() {
+        document.getElementById('resultsDetailsPopup').style.display = 'none';
+    }
+
     // Handle form submission
     resultsForm.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -159,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const input = document.getElementById(inputId);
             if (input) {
                 const value = parseFloat(input.value) || 0;
-                results[waste.type] = value;
+                results[waste.type] = {value:value, icon:waste.icon};
             }
         });
 
@@ -269,6 +264,29 @@ document.addEventListener('DOMContentLoaded', () => {
             hour: '2-digit',
             minute: '2-digit'
         });
+    }
+
+    function openResultsDetailsPopup(collecte) {
+        const popup = document.getElementById('resultsDetailsPopup');
+        
+        // Update popup content
+        document.getElementById('results-title').textContent = collecte.title;
+        document.getElementById('results-datetime').textContent = formatDate(collecte.date);
+        document.getElementById('results-location').textContent = collecte.location;
+
+        // Update waste cards
+        const wasteCardsContainer = document.getElementById('results-waste-cards');
+        wasteCardsContainer.innerHTML = Object.entries(collecte.results)
+            .map(([type, {value, icon}]) => `
+                <div class="waste-card">
+                    <span class="waste-icon">${icon}</span>
+                    <span class="waste-type">${type}</span>
+                    <span class="waste-quantity">${value}</span>
+                </div>
+            `).join('');
+
+        // Show the popup
+        popup.style.display = 'flex';
     }
 
     // Initialize everything

@@ -84,6 +84,33 @@
             </form>
         </div>
     </div>
+
+    <!-- Popup for viewing results -->
+    <div id="resultsDetailsPopup" class="popup-overlay">
+        <div class="popup-content">
+            <div class="profile-header">
+                <button type="button" class="cancel-btn floating-close" onclick="closeResultsDetailsPopup()">
+                    <span class="close-icon">✕</span>
+                </button>
+                <div class="collecte-header-content">
+                    <h2 id="results-title">Nom de la collecte</h2>
+                    <span class="collecte-date"><span id="results-datetime"></span></span>
+                </div>
+            </div>
+            <div class="collecte-details">
+                <div class="form-group">
+                    <label>Lieu</label>
+                    <div id="results-location"></div>
+                </div>
+                <div class="waste-form">
+                    <h3>Déchets Collectés</h3>
+                    <div id="results-waste-cards" class="waste-cards readonly">
+                        <!-- Les résultats seront ajoutés dynamiquement -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>
