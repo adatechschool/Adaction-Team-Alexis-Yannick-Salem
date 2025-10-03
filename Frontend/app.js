@@ -36,6 +36,16 @@ app.get('/associations/benevoles', (req, res) => {
     res.sendFile(join(__dirname, 'pages', 'associations', 'assos_benevolesManagement.html'));
 });
 
+// Benevoles Today's Collections
+app.get('/benevoles/today', (req, res) => {
+    res.sendFile(join(__dirname, 'pages', 'benevoles', 'benevoles_today.html'));
+});
+
+// Benevoles Collections List
+app.get('/benevoles/collectes', (req, res) => {
+    res.sendFile(join(__dirname, 'pages', 'benevoles', 'benevoles_collectes.html'));
+});
+
 // Start the server and listen for incoming connections
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`);
