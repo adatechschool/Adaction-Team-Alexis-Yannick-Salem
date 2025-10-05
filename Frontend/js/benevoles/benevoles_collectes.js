@@ -17,6 +17,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Mock data for testing - Replace with actual API calls
+    const wasteTypes = [
+        { type: 'Mégots de cigarette', icon: '🚬', quantity: 0 },
+        { type: 'Emballages plastiques', icon: '🥤', quantity: 0 },
+        { type: 'Bouteilles de verre', icon: '🍾', quantity: 0 },
+        { type: 'Articles de pêche dégradés', icon: '🎣', quantity: 0 },
+        { type: 'Déchets métalliques', icon: '🥫', quantity: 0 },
+    ];
+
     const mockCollectes = [
         {
             id: 1,
@@ -35,11 +43,13 @@ document.addEventListener('DOMContentLoaded', () => {
             responsable: "Jean Martin",
             status: "completed",
             participants: ["user123"],
-            results: [
-                { type: "Plastique", quantity: 5.2 },
-                { type: "Verre", quantity: 3.1 },
-                { type: "Papier", quantity: 2.8 }
-            ]
+            results: {
+                'Mégots de cigarette': { value: 150, icon: '🚬' },
+                'Emballages plastiques': { value: 5.2, icon: '🥤' },
+                'Bouteilles de verre': { value: 3.1, icon: '🍾' },
+                'Articles de pêche dégradés': { value: 1.5, icon: '🎣' },
+                'Déchets métalliques': { value: 2.8, icon: '🥫' }
+            }
         }
     ];
 
@@ -82,7 +92,9 @@ function loadCollectes() {
 function displayCollectes(collectes, container) {
     container.innerHTML = '';
     collectes.forEach(collecte => {
-        const card = createCollecteCard(collecte);
+        const card = collecte.status === 'completed' ? 
+            createCompletedCollecteCard(collecte) : 
+            createCollecteCard(collecte);
         container.appendChild(card);
     });
 }
@@ -96,6 +108,23 @@ function createCollecteCard(collecte) {
             <span class="collecte-datetime">${formatDate(collecte.date)}</span>
             <span class="collecte-location">${collecte.location}</span>
             <span class="collecte-responsable">${collecte.responsable}</span>
+        </div>
+        <div class="card-actions">
+            <button type="button" class="action-btn view-btn">Voir détails</button>
+        </div>
+    `;
+    card.querySelector('.view-btn').addEventListener('click', () => openCollecteDetails(collecte));
+    return card;
+}
+
+function createCompletedCollecteCard(collecte) {
+    const card = document.createElement('div');
+    card.className = 'collecte-card';
+    card.innerHTML = `
+        <div class="collecte-info">
+            <h3 class="collecte-name">${collecte.title}</h3>
+            <span class="collecte-datetime">${formatDate(collecte.date)}</span>
+            <span class="collecte-location">${collecte.location}</span>
         </div>
         <div class="card-actions">
             <button type="button" class="action-btn view-btn">Voir détails</button>
@@ -152,12 +181,14 @@ function openCollecteDetails(collecte) {
     if (collecte.status === 'completed' && collecte.results) {
         wasteResults.style.display = 'block';
         const wasteCards = wasteResults.querySelector('.waste-cards');
-        wasteCards.innerHTML = collecte.results.map(result => `
-            <div class="waste-card">
-                <span class="waste-type">${result.type}</span>
-                <span class="waste-quantity">${result.quantity} kg</span>
-            </div>
-        `).join('');
+        wasteCards.innerHTML = Object.entries(collecte.results)
+            .map(([type, {value, icon}]) => `
+                <div class="waste-card">
+                    <span class="waste-icon">${icon}</span>
+                    <span class="waste-type">${type}</span>
+                    <span class="waste-quantity">${value}</span>
+                </div>
+            `).join('');
     } else {
         wasteResults.style.display = 'none';
     }

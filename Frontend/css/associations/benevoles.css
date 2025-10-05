@@ -52,6 +52,14 @@ body {
     content: "👥";
 }
 
+.nav-link[href="/benevoles/today"]::before {
+    content: "🗓️";
+}
+
+.nav-link[href="/benevoles/collectes"]::before {
+    content: "⏰";
+}
+
 .nav-link.logout::before {
     content: "🚪";
 }
@@ -198,6 +206,7 @@ body {
 
 .benevole-info {
     display: flex;
+    gap: 1.5rem;
 }
 
 /* Popup styles */
@@ -672,14 +681,58 @@ body {
 }
 
 .collecte-card {
-    background-color: #ffffff;
+    background-color: white;
     border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    padding: 1.5rem;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.collecte-card.completed {
+    background-color: #f8f9fa;
+}
+
+.waste-cards {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.waste-cards.readonly .waste-card {
+    background-color: var(--background-light);
+    border: none;
+    padding: 12px;
+}
+
+.waste-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background-color: white;
+    padding: 12px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.waste-icon {
+    font-size: 1.5em;
+    min-width: 30px;
+    text-align: center;
+}
+
+.waste-type {
+    flex-grow: 1;
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.waste-quantity {
+    font-weight: 600;
+    color: var(--text-color);
+    padding: 4px 8px;
+    background-color: rgba(76, 175, 80, 0.1);
+    border-radius: 4px;
 }
 
 .collecte-card:hover {

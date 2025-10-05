@@ -100,14 +100,50 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // Mock user database (replace with actual backend authentication)
+    const mockUsers = {
+        associations: [
+            { username: 'ecoasso', password: 'password123', name: 'EcoAssociation' }
+        ],
+        benevoles: [
+            { username: 'benevolej', password: 'password123', name: 'Jean' }
+        ]
+    };
+
     // Handle login form submission
     loginForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const username = document.getElementById('login-username').value;
         const password = document.getElementById('login-password').value;
 
-        // TODO: Add actual login logic here
-        console.log('Login attempt:', { username, password });
+        // Check in associations
+        const associationUser = mockUsers.associations.find(user => 
+            user.username === username && user.password === password
+        );
+
+        if (associationUser) {
+            // Store user info if needed
+            sessionStorage.setItem('userType', 'association');
+            sessionStorage.setItem('username', username);
+            window.location.href = '/associations/dashboard';
+            return;
+        }
+
+        // Check in benevoles
+        const benevoleUser = mockUsers.benevoles.find(user => 
+            user.username === username && user.password === password
+        );
+
+        if (benevoleUser) {
+            // Store user info if needed
+            sessionStorage.setItem('userType', 'benevole');
+            sessionStorage.setItem('username', username);
+            window.location.href = '/benevoles/today';
+            return;
+        }
+
+        // If no user found
+        alert('Nom d\'utilisateur ou mot de passe incorrect');
     });
 
     // Handle signup type switching
@@ -148,8 +184,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // TODO: Add actual signup logic here
-            console.log('Bénévole signup attempt:', { name, username, city, password });
+            // Check if username already exists
+            if (mockUsers.benevoles.some(user => user.username === username) ||
+                mockUsers.associations.some(user => user.username === username)) {
+                alert('Ce nom d\'utilisateur est déjà pris');
+                return;
+            }
+
+            // Add new user to mock database (replace with actual backend call)
+            mockUsers.benevoles.push({
+                username,
+                password,
+                name,
+                city
+            });
+
+            // Store user info and redirect
+            sessionStorage.setItem('userType', 'benevole');
+            sessionStorage.setItem('username', username);
+            window.location.href = '/benevoles/today';
         } else {
             const name = document.getElementById('signup-asso-name').value;
             const sigle = document.getElementById('signup-asso-sigle').value;
@@ -162,8 +215,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // TODO: Add actual signup logic here
-            console.log('Association signup attempt:', { name, sigle, username, password });
+            // Check if username already exists
+            if (mockUsers.benevoles.some(user => user.username === username) ||
+                mockUsers.associations.some(user => user.username === username)) {
+                alert('Ce nom d\'utilisateur est déjà pris');
+                return;
+            }
+
+            // Add new user to mock database (replace with actual backend call)
+            mockUsers.associations.push({
+                username,
+                password,
+                name,
+                sigle
+            });
+
+            // Store user info and redirect
+            sessionStorage.setItem('userType', 'association');
+            sessionStorage.setItem('username', username);
+            window.location.href = '/associations/dashboard';
         }
     });
 });
