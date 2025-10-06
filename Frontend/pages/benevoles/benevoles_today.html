@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mes Collectes du Jour - EcoCollect</title>
+    <link rel="stylesheet" href="../../css/index.css">
+    <link rel="stylesheet" href="../../css/associations/benevoles.css">
+    <link rel="stylesheet" href="../../css/benevoles/waste-form.css">
+    <script src="../../js/benevoles/benevoles_today.js" defer></script>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="nav-links">
+            <a href="/benevoles/today" class="nav-link active">Aujourd'hui</a>
+            <a href="/benevoles/collectes" class="nav-link">Collectes</a>
+            <a href="/" class="nav-link logout">Déconnexion</a>
+        </div>
+    </nav>
+
+    <main class="container">
+        <section class="management-header">
+            <h1>Mes Collectes du Jour</h1>
+            <div class="section-tabs">
+                <button type="button" class="section-tab active" data-section="today">Collectes</button>
+                <button type="button" class="section-tab" data-section="results">Résultats</button>
+            </div>
+        </section>
+
+        <section id="today-section" class="management-section active">
+            <p class="section-description">Participez aux collectes et enregistrez vos résultats</p>
+            <div class="collectes-list">
+                <div class="collectes-actions">
+                    <input type="search" placeholder="Rechercher une collecte..." class="search-input">
+                </div>
+                <div class="collectes-cards">
+                    <!-- Les cartes des collectes seront ajoutées ici dynamiquement -->
+                </div>
+            </div>
+        </section>
+
+        <section id="results-section" class="management-section">
+            <p class="section-description">Consultez les résultats de vos collectes du jour</p>
+            <div class="collectes-list">
+                <div class="collectes-cards">
+                    <!-- Les résultats des collectes seront ajoutés ici dynamiquement -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Popup for submitting results -->
+    <div id="resultsCollectePopup" class="popup-overlay">
+        <div class="popup-content">
+            <div class="profile-header">
+                <button type="button" class="cancel-btn floating-close" onclick="closeResultsPopup()">
+                    <span class="close-icon">✕</span>
+                </button>
+                <div class="collecte-header-content">
+                    <h2 id="collecte-title">Nom de la collecte</h2>
+                    <span class="collecte-date"><span id="collecte-datetime"></span></span>
+                </div>
+            </div>
+            <form id="resultsCollecteForm">
+                <div class="form-group">
+                    <label for="collecte-location">Lieu</label>
+                    <input type="text" id="collecte-location" name="location" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="collecte-responsable">Bénévole Responsable</label>
+                    <input type="text" id="collecte-responsable" name="responsable" readonly>
+                </div>
+                <div class="waste-form">
+                    <h3>Déchets Collectés</h3>
+                    <div class="waste-cards" id="waste-input-cards">
+                        <!-- Les cartes de déchets seront ajoutées dynamiquement -->
+                    </div>
+                </div>
+                <div class="popup-actions">
+                    <button type="submit" class="action-btn">Enregistrer les résultats</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Popup for viewing results -->
+    <div id="resultsDetailsPopup" class="popup-overlay">
+        <div class="popup-content">
+            <div class="profile-header">
+                <button type="button" class="cancel-btn floating-close" onclick="closeResultsDetailsPopup()">
+                    <span class="close-icon">✕</span>
+                </button>
+                <div class="collecte-header-content">
+                    <h2 id="results-title">Nom de la collecte</h2>
+                    <span class="collecte-date"><span id="results-datetime"></span></span>
+                </div>
+            </div>
+            <div class="collecte-details">
+                <div class="form-group">
+                    <label>Lieu</label>
+                    <div id="results-location"></div>
+                </div>
+                <div class="waste-form">
+                    <h3>Déchets Collectés</h3>
+                    <div id="results-waste-cards" class="waste-cards readonly">
+                        <!-- Les résultats seront ajoutés dynamiquement -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

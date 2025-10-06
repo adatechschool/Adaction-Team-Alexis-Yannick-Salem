@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Collectes - EcoCollect</title>
+    <link rel="stylesheet" href="../../css/index.css">
+    <link rel="stylesheet" href="../../css/associations/benevoles.css">
+    <script src="../../js/benevoles/benevoles_collectes.js" defer></script>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="nav-links">
+            <a href="/benevoles/today" class="nav-link">Aujourd'hui</a>
+            <a href="/benevoles/collectes" class="nav-link active">Collectes</a>
+            <a href="/" class="nav-link logout">Déconnexion</a>
+        </div>
+    </nav>
+
+    <main class="container">
+        <section class="management-header">
+            <h1>Liste des Collectes</h1>
+            <div class="section-tabs">
+                <button type="button" class="section-tab active" data-section="upcoming">À Venir</button>
+                <button type="button" class="section-tab" data-section="history">Historique</button>
+            </div>
+        </section>
+
+        <section id="upcoming-section" class="management-section active">
+            <p class="section-description">Découvrez les prochaines collectes et inscrivez-vous</p>
+            <div class="collectes-list">
+                <div class="collectes-actions">
+                    <input type="search" placeholder="Rechercher une collecte..." class="search-input">
+                </div>
+                <div class="collectes-cards">
+                    <!-- Les cartes des collectes seront ajoutées ici dynamiquement -->
+                </div>
+            </div>
+        </section>
+
+        <section id="history-section" class="management-section">
+            <p class="section-description">Consultez l'historique de vos collectes</p>
+            <div class="collectes-list">
+                <div class="collectes-actions">
+                    <input type="search" placeholder="Rechercher une collecte..." class="search-input">
+                </div>
+                <div class="collectes-cards">
+                    <!-- Les cartes des collectes seront ajoutées ici dynamiquement -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Popup for viewing collecte details -->
+    <div id="collecteDetailsPopup" class="popup-overlay">
+        <div class="popup-content">
+            <div class="profile-header">
+                <button type="button" class="cancel-btn floating-close" onclick="closeDetailsPopup()">
+                    <span class="close-icon">✕</span>
+                </button>
+                <div class="collecte-header-content">
+                    <h2 id="collecte-title">Nom de la collecte</h2>
+                    <span class="collecte-date">📅 <span id="collecte-datetime"></span></span>
+                </div>
+            </div>
+            <div class="collecte-details">
+                <div class="form-group">
+                    <label for="details-location">Lieu</label>
+                    <input type="text" id="details-location" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="details-responsable">Bénévole Responsable</label>
+                    <input type="text" id="details-responsable" readonly>
+                </div>
+                <div id="participation-status" class="status-info">
+                    <!-- Participation status will be added here -->
+                </div>
+                <div id="waste-results" class="waste-results" style="display: none;">
+                    <h3>Résultats de la collecte</h3>
+                    <div class="waste-cards readonly">
+                        <!-- Waste results will be added here -->
+                    </div>
+                </div>
+                <div class="popup-actions">
+                    <button type="button" class="action-btn" id="participateBtn">Participer à la collecte</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

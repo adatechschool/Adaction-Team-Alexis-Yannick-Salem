@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dashboard Association - EcoCollect</title>
+    <link rel="stylesheet" href="../../css/index.css">
+    <link rel="stylesheet" href="../../css/associations/dashboard.css">
+    <script src="../../js/associations/dashboard.js" defer></script>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="nav-links">
+            <a href="/associations/dashboard" class="nav-link active">Dashboard</a>
+            <a href="/associations/benevoles" class="nav-link">Bénévoles</a>
+            <a href="/" class="nav-link logout">Déconnexion</a>
+        </div>
+    </nav>
+
+    <main class="container">
+        <section class="dashboard-header">
+            <h1>Tableau de Bord</h1>
+            <p class="welcome-text">Bienvenue sur votre espace association</p>
+        </section>
+
+        <section class="dashboard-controls">
+            <div class="dashboard-tabs">
+                <button class="dashboard-tab active" data-tab="global">Globale</button>
+                <button class="dashboard-tab" data-tab="wastes">Déchets</button>
+            </div>
+        </section>
+
+        <section class="dashboard-content">
+            <div id="global-section" class="dashboard-section active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Bénévoles Actifs</h3>
+                        <p class="stat-number">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Collectes Réalisées</h3>
+                        <p class="stat-number">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Déchets Collectés</h3>
+                        <p class="stat-number">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="wastes-section" class="dashboard-section">
+                <div class="waste-stats-grid">
+                    <!-- Waste type cards will be dynamically inserted here -->
+                </div>
+            </div>
+        </section>
+    </main>
+</body>
+
+</html>
