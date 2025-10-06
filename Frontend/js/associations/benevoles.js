@@ -1,3 +1,6 @@
+const params = new URLSearchParams(window.location.search);
+const userID = params.get('id');
+
 document.addEventListener('DOMContentLoaded', () => {
     // Update active nav link based on current page
     const currentPath = window.location.pathname;
@@ -11,50 +14,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Example bénévoles data (to be replaced with real data)
-    const benevoles = [
-        { 
-            username: 'jdupont',
-            first_name: 'Jean',
-            last_name: 'Dupont',
-            name: 'Jean Dupont',
-            city: 'Paris',
-            points: 150 
-        },
-        { 
-            username: 'mcurie',
-            first_name: 'Marie',
-            last_name: 'Curie',
-            name: 'Marie Curie',
-            city: 'Lyon',
-            points: 200 
-        },
-        { 
-            username: 'pmartin',
-            first_name: 'Paul',
-            last_name: 'Martin',
-            name: 'Paul Martin',
-            city: 'Marseille',
-            points: 120 
-        },
-    ];
-
     // Function to populate the cards with bénévoles data
-    function displayBenevoles(benevolesList) {
+    async function displayBenevoles() {
         const cardsContainer = document.querySelector('.benevoles-cards');
         
         // Clear existing cards
         cardsContainer.innerHTML = '';
         
+        // Fetch backend data here
+        const response = await fetch(`http://192.168.7.103:3000/benevole/villes`);
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Erreur lors de la récupération des bénévoles');
+        }
+
         // Add each bénévole as a card
-        benevolesList.forEach((benevole, index) => {
+        data.forEach((benevole, index) => {
             const card = document.createElement('div');
             card.className = 'benevole-card';
             card.innerHTML = `
                 <div class="benevole-info">
-                    <div class="benevole-name">${benevole.name}</div>
-                    <div class="benevole-city">${benevole.city}</div>
-                    <div class="benevole-points">${benevole.points} points</div>
+                    <div class="benevole-name">${benevole.first_name} ${benevole.last_name}</div>
+                    <div class="benevole-city">${benevole.ville_name}</div>
+                    <div class="benevole-points">${benevole.points_collectes} points</div>
                 </div>
                 <div class="card-actions">
                     <button class="action-button view-btn" data-index="${index}">
@@ -68,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Initial display of bénévoles
-    displayBenevoles(benevoles);
+    displayBenevoles();
 
     // Handle search functionality
     const searchInput = document.querySelector('.search-input');
@@ -115,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         debounceTimer = setTimeout(async () => {
             try {
-                const response = await fetch(`https://geo.api.gouv.fr/communes?nom=${searchTerm}&boost=population&limit=5`);
+                const response = await fetch(`http://192.168.7.103:3000/ville`);
                 const cities = await response.json();
                 
                 cityResults.innerHTML = '';
@@ -123,10 +106,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     cities.forEach(city => {
                         const div = document.createElement('div');
                         div.className = 'city-option';
-                        div.textContent = `${city.nom} (${city.codeDepartement})`;
+                        div.textContent = `${city.name})`;
                         div.addEventListener('click', () => {
-                            citySearch.value = `${city.nom} (${city.codeDepartement})`;
-                            cityInput.value = city.nom;
+                            citySearch.value = `${city.name})`;
+                            cityInput.value = city.id;
                             cityResults.classList.remove('active');
                         });
                         cityResults.appendChild(div);
@@ -158,20 +141,26 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const newBenevole = {
-            username: form.username.value,
-            first_name: form.first_name.value,
-            last_name: form.last_name.value,
-            name: `${form.first_name.value} ${form.last_name.value}`,
-            city: cityInput.value,
-            points: 0,
-        };
-
-        // Add to benevoles array
-        benevoles.push(newBenevole);
+        const resp = fetch('http://192.168.7.103:3000/benevole/signup', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                username: form.username.value,
+                password: form.password.value,
+                first_name: form.first_name.value,
+                last_name: form.last_name.value,
+                id_ville: cityInput.value,
+                points_collectes: 0,
+            })
+        });
         
+        if (!resp.ok) {
+            alert('Erreur lors de l\'ajout du bénévole');
+            return;
+        }
+
         // Update display
-        displayBenevoles(benevoles);
+        displayBenevoles();
         
         // Close popup and reset form
         closePopup();
@@ -193,9 +182,9 @@ document.addEventListener('DOMContentLoaded', () => {
         profileForm.elements.username.value = benevole.username;
         profileForm.elements.first_name.value = benevole.first_name;
         profileForm.elements.last_name.value = benevole.last_name;
-        profileForm.elements.citySearch.value = `${benevole.city}`;
-        profileForm.elements.city.value = benevole.city;
-        profileForm.elements.points.value = benevole.points;
+        profileForm.elements.citySearch.value = `${benevole.ville_name}`;
+        profileForm.elements.city.value = benevole.ville_name;
+        profileForm.elements.points.value = benevole.points_collectes;
 
         // Set all inputs to readonly initially
         Array.from(profileForm.elements).forEach(input => {

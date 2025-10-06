@@ -7,6 +7,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const signupCity = document.getElementById('signup-city');
     const citiesList = document.getElementById('cities-list');
 
+    // Handle signup type switching
+    const signupTypeBtns = document.querySelectorAll('.signup-tab-btn');
+    const signupSections = document.querySelectorAll('.signup-section');
+
+    signupTypeBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const signupType = btn.dataset.signup;
+            
+            // Update active states
+            signupTypeBtns.forEach(b => b.classList.remove('active'));
+            signupSections.forEach(s => s.classList.remove('active'));
+            
+            btn.classList.add('active');
+            document.getElementById(`${signupType}-signup`).classList.add('active');
+
+            // Clear form fields when switching
+            clearForm(signupForm);
+        });
+    });
+
     // Function to clear form fields
     function clearForm(form) {
         form.reset();
@@ -55,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (query.length < 3) return [];
         
         try {
-            const response = await fetch(`https://geo.api.gouv.fr/communes?nom=${query}&limit=5`);
+            const response = await fetch(`http://192.168.7.103:3000/ville?nom=${query}&limit=5`);
             const cities = await response.json();
             return cities;
         } catch (error) {
@@ -69,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
         citiesList.innerHTML = '';
         cities.forEach(city => {
             const option = document.createElement('option');
-            option.value = `${city.nom} (${city.codeDepartement})`;
+            option.value = `${city.name}`;
             citiesList.appendChild(option);
         });
     }
@@ -100,74 +120,52 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Mock user database (replace with actual backend authentication)
-    const mockUsers = {
-        associations: [
-            { username: 'ecoasso', password: 'password123', name: 'EcoAssociation' }
-        ],
-        benevoles: [
-            { username: 'benevolej', password: 'password123', name: 'Jean' }
-        ]
-    };
 
     // Handle login form submission
-    loginForm.addEventListener('submit', (e) => {
+    loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const username = document.getElementById('login-username').value;
         const password = document.getElementById('login-password').value;
 
-        // Check in associations
-        const associationUser = mockUsers.associations.find(user => 
-            user.username === username && user.password === password
-        );
+        try {
+            const response = await fetch('http://192.168.7.103:3000/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, password })
+            });
 
-        if (associationUser) {
-            // Store user info if needed
-            sessionStorage.setItem('userType', 'association');
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Erreur lors de la connexion');
+            }
+
+            // Determine user type based on response data
+            // If sigle exists, it's an association, otherwise it's a benevole
+            const userType = data.sigle ? 'association' : 'benevole';
+
+            // Store user info in session
+            sessionStorage.setItem('userType', userType);
             sessionStorage.setItem('username', username);
-            window.location.href = '/associations/dashboard';
-            return;
+            sessionStorage.setItem('userData', JSON.stringify(data));
+
+            // Redirect based on user type and include user ID in URL
+            if (userType === 'association') {
+                window.location.href = `/associations/dashboard&id=${data.id}`;
+            } else {
+                window.location.href = `/benevoles/today&id=${data.id}`;
+            }
+
+        } catch (error) {
+            console.error('Login error:', error);
+            alert(error.message || 'Nom d\'utilisateur ou mot de passe incorrect');
         }
-
-        // Check in benevoles
-        const benevoleUser = mockUsers.benevoles.find(user => 
-            user.username === username && user.password === password
-        );
-
-        if (benevoleUser) {
-            // Store user info if needed
-            sessionStorage.setItem('userType', 'benevole');
-            sessionStorage.setItem('username', username);
-            window.location.href = '/benevoles/today';
-            return;
-        }
-
-        // If no user found
-        alert('Nom d\'utilisateur ou mot de passe incorrect');
-    });
-
-    // Handle signup type switching
-    const signupTypeBtns = document.querySelectorAll('.signup-tab-btn');
-    const signupSections = document.querySelectorAll('.signup-section');
-
-    signupTypeBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const signupType = btn.dataset.signup;
-            
-            // Update active states
-            signupTypeBtns.forEach(b => b.classList.remove('active'));
-            signupSections.forEach(s => s.classList.remove('active'));
-            
-            btn.classList.add('active');
-            document.getElementById(`${signupType}-signup`).classList.add('active');
-
-            // Clear form fields when switching
-            clearForm(signupForm);
-        });
     });
 
     // Handle signup form submission
-    signupForm.addEventListener('submit', (e) => {
+    signupForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const activeSection = document.querySelector('.signup-section.active');
         const formType = activeSection.querySelector('.submit-btn').dataset.type;
@@ -184,25 +182,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Check if username already exists
-            if (mockUsers.benevoles.some(user => user.username === username) ||
-                mockUsers.associations.some(user => user.username === username)) {
-                alert('Ce nom d\'utilisateur est déjà pris');
-                return;
+            try {
+                const response = await fetch('http://192.168.7.103:3000/benevole/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username,
+                        password,
+                        first_name: name,
+                        last_name: '',  // Add this field if needed
+                        id_ville: city // You might need to get the actual city ID
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Error during signup');
+                }
+
+                // Store user info and redirect
+                sessionStorage.setItem('userType', 'benevole');
+                sessionStorage.setItem('username', username);
+                sessionStorage.setItem('userData', JSON.stringify(data));
+                window.location.href = `/benevoles/today&id=${data.id}`;
+            } catch (error) {
+                console.error('Signup error:', error);
+                alert(error.message || 'Error during signup');
             }
-
-            // Add new user to mock database (replace with actual backend call)
-            mockUsers.benevoles.push({
-                username,
-                password,
-                name,
-                city
-            });
-
-            // Store user info and redirect
-            sessionStorage.setItem('userType', 'benevole');
-            sessionStorage.setItem('username', username);
-            window.location.href = '/benevoles/today';
         } else {
             const name = document.getElementById('signup-asso-name').value;
             const sigle = document.getElementById('signup-asso-sigle').value;
@@ -214,21 +223,35 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('Les mots de passe ne correspondent pas!');
                 return;
             }
+            try {
+                const response = await fetch('http://192.168.7.103:3000/associations/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username,
+                        password,
+                        name,
+                        sigle
+                    })
+                });
 
-            // Check if username already exists
-            if (mockUsers.benevoles.some(user => user.username === username) ||
-                mockUsers.associations.some(user => user.username === username)) {
-                alert('Ce nom d\'utilisateur est déjà pris');
-                return;
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Error during signup');
+                }
+
+                // Store user info and redirect
+                sessionStorage.setItem('userType', 'association');
+                sessionStorage.setItem('username', username);
+                sessionStorage.setItem('userData', JSON.stringify(data));
+                window.location.href = `/associations/dashboard&id=${data.id}`;
+            } catch (error) {
+                console.error('Signup error:', error);
+                alert(error.message || 'Error during signup');
             }
-
-            // Add new user to mock database (replace with actual backend call)
-            mockUsers.associations.push({
-                username,
-                password,
-                name,
-                sigle
-            });
 
             // Store user info and redirect
             sessionStorage.setItem('userType', 'association');

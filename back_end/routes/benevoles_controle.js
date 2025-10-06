@@ -18,6 +18,19 @@ router.get("/", async (req, res) => {
   }
 });
 
+router.get("/villes", async (req, res) => {
+  try {
+    const reslt = await db.query(`SELECT benevoles.*, ville.name AS ville_name FROM benevoles JOIN ville ON benevoles.id_ville = ville.id`);
+    res.status(200).json(reslt.rows);
+  } catch (error) {
+    console.error(
+      "Erreur lors de la recuperation des donnees benevoles",
+      error
+    );
+    res.status(500).json("Erreur serveur");
+  }
+});
+
 // Récupérer l'historique des collectes d'un bénévole
 router.get("/historique", async (req, res) => {
   try {
@@ -84,11 +97,79 @@ router.patch("/points", async (req, res) => {
        WHERE id = ${id}`
     );
 
-    res.json(reslt.rows[0]);
+    res.status(201).json(reslt.rows[0]);
   } catch (Erreur) {
     console.error("impossible de mettre a jour les points", Erreur);
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
+// Mettre a jour les informations d'un benevole
+
+router.patch("/:id", async (req, res) => {
+  try {
+    const id  = Number(req.params.id);
+    
+    const {
+      newUsername,
+      newFirstName,
+      newLastname,
+      newPassword,
+      newIdVille,
+      newAssociationId,
+    } = req.body;
+    
+    const check = await db.query(
+      `
+      SELECT 1 FROM (
+        SELECT username FROM benevoles
+        UNION
+        SELECT username FROM associations
+      ) AS users
+      WHERE username = $1
+      `,
+      [newUsername]
+    );
+    
+    if (check.rows.length > 0) {
+      return res.status(400).json({ error: "Nom deja existant" });
+    }
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+
+    const result = await db.query(
+      `
+      UPDATE benevoles
+      SET 
+        username       = COALESCE($1, username),
+        password       = COALESCE($2, password),
+        first_name     = COALESCE($3, first_name),
+        last_name      = COALESCE($4, last_name),
+        association_id = COALESCE($5, association_id),
+        id_ville       = COALESCE($6, id_ville),
+        date_modification = current_timestamp
+      WHERE id = $7
+      RETURNING *;
+      `,
+      [
+        newUsername || null,
+        hashedPassword || null,
+        newFirstName || null,
+        newLastname || null,
+        newAssociationId || null,
+        newIdVille || null,
+        id,
+      ]
+    );
+    console.log(result.rows[0]);
+    res.status(200).json(result.rows[0]);
+  } catch (error) {
+    console.error(
+      "impossible de mettre a jour les informations du benevole ",
+      error
+    );
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
 
 export default router;

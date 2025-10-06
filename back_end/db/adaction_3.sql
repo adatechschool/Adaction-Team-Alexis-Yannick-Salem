@@ -105,3 +105,4 @@ ALTER COLUMN dechet_id DROP NOT NULL;
 
 ALTER TABLE associations ADD COLUMN date_creation timestamp;
 ALTER TABLE associations ADD COLUMN username TEXT, ADD COLUMN password TEXT;
+ALTER TABLE collectes ADD COLUMN status TEXT

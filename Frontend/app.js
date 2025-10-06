@@ -1,6 +1,7 @@
 // Import required modules
 import express from 'express';  // Express.js web framework
-import cors from "cors";        // Enable Cross-Origin Resource Sharing
+import cors from "cors";
+import dotenv from "dotenv/config";        // Enable Cross-Origin Resource Sharing
 import { dirname, join } from 'path';  // Path utilities for file/directory paths
 import { fileURLToPath } from 'url';   // Convert file URL to file path
 
@@ -11,7 +12,7 @@ const app = express();
 app.use(cors());
 
 // Define server port
-const port = 3001;
+const port = process.env.PORT;
 
 // Get the current directory path (needed because ES modules don't have __dirname by default)
 const __dirname = dirname(fileURLToPath(import.meta.url));
