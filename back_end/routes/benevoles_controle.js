@@ -81,12 +81,87 @@ router.patch("/points", async (req, res) => {
     const reslt = await db.query(
       `UPDATE benevoles
        SET points_collectes = COALESCE(points_collectes,0) + ${points}
-       WHERE id = ${id}`
+       WHERE id = ${id} RETURNING *`
     );
 
     res.json(reslt.rows[0]);
   } catch (Erreur) {
     console.error("impossible de mettre a jour les points", Erreur);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+// Mettre a jour les informations d'un benevole
+router.patch("/:id", async (req, res) => {
+  try {
+    const id  = Number(req.params.id);
+    
+    const {
+      newUsername,
+      newFirstName,
+      newLastname,
+      newPassword,
+      newIdVille,
+      newAssociationId,
+    } = req.body;
+    console.log(
+      newUsername,
+      newFirstName,
+      newLastname,
+      newPassword,
+      newIdVille,
+      newAssociationId
+    );
+
+    const check = await db.query(
+      `
+      SELECT 1 FROM (
+        SELECT username FROM benevoles
+        UNION
+        SELECT username FROM associations
+      ) AS users
+      WHERE username = $1
+      `,
+      [newUsername]
+    );
+    
+    if (check.rows.length > 0) {
+      return res.status(400).json({ error: "Nom deja existant" });
+    }
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+
+    const result = await db.query(
+      `
+      UPDATE benevoles
+      SET 
+        username       = COALESCE($1, username),
+        password       = COALESCE($2, password),
+        first_name     = COALESCE($3, first_name),
+        last_name      = COALESCE($4, last_name),
+        association_id = COALESCE($5, association_id),
+        id_ville       = COALESCE($6, id_ville),
+        date_modification = current_timestamp
+      WHERE id = $7
+      RETURNING *;
+      `,
+      [
+        newUsername || null,
+        hashedPassword || null,
+        newFirstName || null,
+        newLastname || null,
+        newAssociationId || null,
+        newIdVille || null,
+        id,
+      ]
+    );
+    console.log(result.rows[0]);
+    res.status(200).json(result.rows[0]);
+  } catch (error) {
+    console.error(
+      "impossible de mettre a jour les informations du benevole ",
+      error
+    );
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
