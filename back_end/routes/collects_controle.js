@@ -6,7 +6,11 @@ const router = Router();
 // Récupérer toutes les collectes
 router.get("/", async (req, res) => {
   try {
-    const result = await db.query(`SELECT * FROM collectes`);
+    const result = await db.query(`SELECT c.id, c.date, c.status, b.first_name, b.last_name, v.name AS ville
+        FROM collectes c
+        JOIN benevoles b ON c.benevole_responsable = b.id
+        JOIN ville v ON c.id_ville = v.id
+        ORDER BY c.date`);
     res.status(200).json(result.rows);
   } catch (error) {
     console.error("Erreur lors de la recuperation de l'historique des collectes", error);
