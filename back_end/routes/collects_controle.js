@@ -6,7 +6,8 @@ const router = Router();
 // Récupérer toutes les collectes
 router.get("/", async (req, res) => {
   try {
-    const result = await db.query(`SELECT c.id, c.date, c.status, b.first_name, b.last_name, v.name AS ville
+    const result = await db.query(`SELECT c.id, c.date, c.id_ville, c.benevole_responsable,
+        c.status, b.first_name, b.last_name, v.name AS ville
         FROM collectes c
         JOIN benevoles b ON c.benevole_responsable = b.id
         JOIN ville v ON c.id_ville = v.id
@@ -21,18 +22,18 @@ router.get("/", async (req, res) => {
 // Créer une nouvelle collecte
 router.post("/", async (req, res) => {
   try {
-    const { name, date, time, location, description, benevole_responsable } = req.body;
+    const {date, id_ville, benevole_responsable } = req.body;
 
     // Vérifier que tous les champs requis sont présents
-    if (!name || !date || !time || !location || !benevole_responsable) {
+    if (!date || !id_ville || !benevole_responsable) {
       return res.status(400).json({ error: "Tous les champs requis doivent être remplis" });
     }
 
     const result = await db.query(
-      `INSERT INTO collectes (name, date, time, location, description, benevole_responsable, status, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, 'À venir', CURRENT_TIMESTAMP)
+      `INSERT INTO collectes (date, id_ville, benevole_responsable, status)
+       VALUES ($1, $2, $3, 'À venir')
        RETURNING *`,
-      [name, date, time, location, description, benevole_responsable]
+      [date, id_ville, benevole_responsable]
     );
 
     res.status(201).json(result.rows[0]);
@@ -45,8 +46,8 @@ router.post("/", async (req, res) => {
 // Mettre à jour une collecte existante
 router.patch("/:id", async (req, res) => {
   try {
-    const { id } = req.params;
-    const { name, date, time, location, description, benevole_responsable, status } = req.body;
+    const id = Number(req.params.id);
+    const {date, id_ville, benevole_responsable, status } = req.body;
 
     // Vérifier si la collecte existe
     const checkCollecte = await db.query("SELECT * FROM collectes WHERE id = $1", [id]);
@@ -59,29 +60,14 @@ router.patch("/:id", async (req, res) => {
     let values = [];
     let valueIndex = 1;
 
-    if (name) {
-      updateFields.push(`name = $${valueIndex}`);
-      values.push(name);
-      valueIndex++;
-    }
     if (date) {
       updateFields.push(`date = $${valueIndex}`);
       values.push(date);
       valueIndex++;
     }
-    if (time) {
-      updateFields.push(`time = $${valueIndex}`);
-      values.push(time);
-      valueIndex++;
-    }
-    if (location) {
-      updateFields.push(`location = $${valueIndex}`);
-      values.push(location);
-      valueIndex++;
-    }
-    if (description) {
-      updateFields.push(`description = $${valueIndex}`);
-      values.push(description);
+    if (id_ville) {
+      updateFields.push(`id_ville = $${valueIndex}`);
+      values.push(id_ville);
       valueIndex++;
     }
     if (benevole_responsable) {
@@ -93,6 +79,11 @@ router.patch("/:id", async (req, res) => {
       updateFields.push(`status = $${valueIndex}`);
       values.push(status);
       valueIndex++;
+    }
+
+    // Check if at least one field is being updated
+    if (updateFields.length === 0) {
+      return res.status(400).json({ error: "Aucun champ à mettre à jour" });
     }
 
     values.push(id); // Ajouter l'ID à la fin pour la clause WHERE
@@ -116,7 +107,7 @@ router.patch("/:id", async (req, res) => {
 // Supprimer une collecte
 router.delete("/:id", async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = Number(req.params.id);
 
     // Vérifier si la collecte existe
     const checkCollecte = await db.query("SELECT * FROM collectes WHERE id = $1", [id]);

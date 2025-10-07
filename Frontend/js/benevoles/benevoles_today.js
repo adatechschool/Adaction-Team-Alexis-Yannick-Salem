@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const API_BASE_URL = 'http://192.168.7.103:3000';
+    
     // Get DOM elements
     const resultsPopup = document.getElementById('resultsCollectePopup');
     const resultsForm = document.getElementById('resultsCollecteForm');
@@ -33,35 +35,32 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Mock data for testing - Replace with actual API calls
-    const mockCollectes = [
-        {
-            id: 1,
-            title: "Collecte Place du Marché",
-            date: new Date().toISOString(),
-            location: "Place du Marché",
-            responsable: "Marie Dubois",
-            status: "in-progress",
-            results: null
-        },
-        {
-            id: 2,
-            title: "Collecte Parc Municipal",
-            date: new Date().toISOString(),
-            location: "Parc de la Ville",
-            responsable: "Jean Martin",
-            status: "in-progress",
-            results: null
-        }
-    ];
-
     // Initialize the page
-    displayActiveCollectes();
-    displayCompletedCollectes();
+    loadCollectes();
+
+    // Function to load collectes from API
+    async function loadCollectes() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/collectes`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch collectes');
+            }
+            const collectes = await response.json();
+            
+            // Filter by status
+            const activeCollectes = collectes.filter(c => c.status === 'En cours' || c.status === 'in-progress');
+            const completedCollectes = collectes.filter(c => c.status === 'Terminée' || c.status === 'completed');
+            
+            displayActiveCollectes(activeCollectes);
+            displayCompletedCollectes(completedCollectes);
+        } catch (error) {
+            console.error('Error loading collectes:', error);
+            alert('Erreur lors du chargement des collectes');
+        }
+    }
 
     // Function to display active collectes
-    function displayActiveCollectes() {
-        const activeCollectes = mockCollectes.filter(c => c.status === 'in-progress');
+    function displayActiveCollectes(activeCollectes) {
         const container = document.querySelector('#today-section .collectes-cards');
         container.innerHTML = '';
         
@@ -72,8 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Function to display completed collectes
-    function displayCompletedCollectes() {
-        const completedCollectes = mockCollectes.filter(c => c.status === 'completed');
+    function displayCompletedCollectes(completedCollectes) {
         const container = document.querySelector('#results-section .collectes-cards');
         container.innerHTML = '';
         
@@ -87,12 +85,16 @@ document.addEventListener('DOMContentLoaded', () => {
     function createCollecteCard(collecte) {
         const card = document.createElement('div');
         card.className = 'collecte-card';
+        // Format title from date and ville
+        const title = collecte.ville ? `Collecte à ${collecte.ville}` : `Collecte #${collecte.id}`;
+        const responsable = `${collecte.first_name || ''} ${collecte.last_name || ''}`.trim() || 'Non assigné';
+        
         card.innerHTML = `
             <div class="collecte-info">
-                <h3 class="collecte-name">${collecte.title}</h3>
+                <h3 class="collecte-name">${title}</h3>
                 <span class="collecte-datetime">${formatDate(collecte.date)}</span>
-                <span class="collecte-location">${collecte.location}</span>
-                <span class="collecte-responsable">${collecte.responsable}</span>
+                <span class="collecte-location">${collecte.ville || 'Lieu non spécifié'}</span>
+                <span class="collecte-responsable">${responsable}</span>
             </div>
             <div class="card-actions">
                 <button type="button" class="action-btn">Saisir les résultats</button>
@@ -106,11 +108,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function createResultsCard(collecte) {
         const card = document.createElement('div');
         card.className = 'collecte-card';
+        const title = collecte.ville ? `Collecte à ${collecte.ville}` : `Collecte #${collecte.id}`;
+        
         card.innerHTML = `
             <div class="collecte-info">
-                <h3 class="collecte-name">${collecte.title}</h3>
+                <h3 class="collecte-name">${title}</h3>
                 <span class="collecte-datetime">${formatDate(collecte.date)}</span>
-                <span class="collecte-location">${collecte.location}</span>
+                <span class="collecte-location">${collecte.ville || 'Lieu non spécifié'}</span>
             </div>
             <div class="card-actions">
                 <button type="button" class="action-btn">Voir les résultats</button>
@@ -122,10 +126,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function openResultsPopup(collecte) {
         // Update popup content
-        document.getElementById('collecte-title').textContent = collecte.title;
+        const title = collecte.ville ? `Collecte à ${collecte.ville}` : `Collecte #${collecte.id}`;
+        const responsable = `${collecte.first_name || ''} ${collecte.last_name || ''}`.trim() || 'Non assigné';
+        
+        document.getElementById('collecte-title').textContent = title;
         document.getElementById('collecte-datetime').textContent = formatDate(collecte.date);
-        document.getElementById('collecte-location').value = collecte.location;
-        document.getElementById('collecte-responsable').value = collecte.responsable;
+        document.getElementById('collecte-location').value = collecte.ville || '';
+        document.getElementById('collecte-responsable').value = responsable;
+        
+        // Store collecte ID for form submission
+        resultsForm.dataset.collecteId = collecte.id;
 
         // Create waste input cards
         createWasteInputCards();
@@ -144,8 +154,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Handle form submission
-    resultsForm.addEventListener('submit', (e) => {
+    resultsForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        
+        const collecteId = resultsForm.dataset.collecteId;
+        if (!collecteId) {
+            alert('Erreur: ID de collecte manquant');
+            return;
+        }
         
         // Get all waste inputs and their values
         const results = {};
@@ -158,21 +174,33 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Prepare the data to be sent
-        const collecteData = {
-            id: mockCollectes[0].id, // In real app, this would be the current collecte's ID
-            location: document.getElementById('collecte-location').value,
-            responsable: document.getElementById('collecte-responsable').value,
-            wastes: results,
-            date: new Date().toISOString()
-        };
+        try {
+            // Update collecte status to completed
+            const response = await fetch(`${API_BASE_URL}/collectes/${collecteId}`, {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    status: 'Terminée' // or 'completed' depending on your backend
+                })
+            });
 
-        // Here you would make an API call to save the results
-        console.log('Submitting collecte data:', collecteData);
-        
-        // For demonstration: Update mock data
-        mockCollectes[0].status = 'completed';
-        mockCollectes[0].results = results;
+            if (!response.ok) {
+                throw new Error('Failed to update collecte status');
+            }
+
+            // Here you would also save the waste results to your backend
+            // For now, just log them
+            console.log('Collecte results:', results);
+
+            // Close popup and reload data
+            closeResultsPopup();
+            loadCollectes();
+            
+            alert('Résultats enregistrés avec succès!');
+        } catch (error) {
+            console.error('Error saving results:', error);
+            alert('Erreur lors de l\'enregistrement des résultats');
+        }
         
         // Refresh displays
         displayActiveCollectes();
@@ -232,12 +260,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize search functionality
     const searchInput = document.querySelector('.search-input');
-    searchInput.addEventListener('input', (e) => {
+    searchInput.addEventListener('input', async (e) => {
         const searchTerm = e.target.value.toLowerCase();
-        const activeCollectes = mockCollectes.filter(collecte => 
-            collecte.status === 'in-progress' &&
-            (collecte.title.toLowerCase().includes(searchTerm) ||
-             collecte.location.toLowerCase().includes(searchTerm))
+        const allCollectes = await loadCollectes();
+        const activeCollectes = allCollectes.filter(collecte => 
+            collecte.status === 'En cours' &&
+            (collecte.ville.toLowerCase().includes(searchTerm) ||
+             collecte.first_name.toLowerCase().includes(searchTerm) ||
+             collecte.last_name.toLowerCase().includes(searchTerm))
         );
         const container = document.querySelector('#today-section .collectes-cards');
         container.innerHTML = '';
@@ -270,20 +300,27 @@ document.addEventListener('DOMContentLoaded', () => {
         const popup = document.getElementById('resultsDetailsPopup');
         
         // Update popup content
-        document.getElementById('results-title').textContent = collecte.title;
+        document.getElementById('results-title').textContent = `${collecte.ville} - ${collecte.first_name} ${collecte.last_name}`;
         document.getElementById('results-datetime').textContent = formatDate(collecte.date);
-        document.getElementById('results-location').textContent = collecte.location;
+        document.getElementById('results-location').textContent = collecte.ville;
 
         // Update waste cards
         const wasteCardsContainer = document.getElementById('results-waste-cards');
-        wasteCardsContainer.innerHTML = Object.entries(collecte.results)
-            .map(([type, {value, icon}]) => `
-                <div class="waste-card">
-                    <span class="waste-icon">${icon}</span>
-                    <span class="waste-type">${type}</span>
-                    <span class="waste-quantity">${value}</span>
-                </div>
-            `).join('');
+        // Note: If waste results are stored in collecte.results as JSON, parse and display
+        // For now, display placeholder or fetch from API if available
+        if (collecte.results) {
+            const results = typeof collecte.results === 'string' ? JSON.parse(collecte.results) : collecte.results;
+            wasteCardsContainer.innerHTML = Object.entries(results)
+                .map(([type, {value, icon}]) => `
+                    <div class="waste-card">
+                        <span class="waste-icon">${icon}</span>
+                        <span class="waste-type">${type}</span>
+                        <span class="waste-quantity">${value}</span>
+                    </div>
+                `).join('');
+        } else {
+            wasteCardsContainer.innerHTML = '<p>Aucun résultat disponible</p>';
+        }
 
         // Show the popup
         popup.style.display = 'flex';
@@ -291,6 +328,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize everything
     createWasteInputCards();
-    displayActiveCollectes();
-    displayCompletedCollectes();
+    
+    // Load and display collectes from backend
+    loadCollectes().then(collectes => {
+        displayActiveCollectes(collectes);
+        displayCompletedCollectes(collectes);
+    }).catch(error => {
+        console.error('Erreur lors du chargement des collectes:', error);
+    });
 });

@@ -151,13 +151,6 @@ document.addEventListener('DOMContentLoaded', () => {
             sessionStorage.setItem('username', username);
             sessionStorage.setItem('userData', JSON.stringify(data));
 
-            // Redirect based on user type and include user ID in URL
-            if (userType === 'association') {
-                window.location.href = `/associations/dashboard&id=${data.id}`;
-            } else {
-                window.location.href = `/benevoles/today&id=${data.id}`;
-            }
-
         } catch (error) {
             console.error('Login error:', error);
             alert(error.message || 'Nom d\'utilisateur ou mot de passe incorrect');

@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     const API_BASE_URL = 'http://192.168.7.103:3000';
+    let collectes = []; // Declare collectes variable
 
     // Section tabs management
     const sectionTabs = document.querySelectorAll('.section-tab');
@@ -62,6 +63,26 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    async function populateLocationSelect(selectElement) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/ville`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch villes');
+            }
+            const villes = await response.json();
+
+            selectElement.innerHTML = '<option value="">Sélectionner une ville</option>';
+            villes.forEach(ville => {
+                const option = document.createElement('option');
+                option.value = ville.id; // Use ID as value
+                option.textContent = ville.name;
+                selectElement.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error fetching villes:', error);
+        }
+    }
+
     // Function to populate the cards with collectes data
     async function displayCollectes(collectesList = null) {
         const cardsContainer = document.querySelector('.collectes-cards');
@@ -87,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="collecte-info">
                     <div class="collecte-name">${collecteName}</div>
                     <div class="collecte-datetime">${formatDateTime(collecte.date, collecte.time)}</div>
-                    <div class="collecte-location">${collecte.ville || collecte.location || ''}</div>
+                    <div class="collecte-location">${collecte.ville}</div>
                     <div class="collecte-responsable">${responsableName}</div>
                     <div class="collecte-status">${collecte.status || 'À venir'}</div>
                 </div>
@@ -120,11 +141,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Handle search functionality
     const searchInput = document.querySelector('.collectes-list .search-input');
-    searchInput.addEventListener('input', (e) => {
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
         const searchTerm = e.target.value.toLowerCase();
         const filteredCollectes = collectes.filter(collecte => {
             const name = collecte.name || '';
-            const location = collecte.ville || collecte.location || '';
+            const location = collecte.ville || '';
             const responsable = `${collecte.first_name || ''} ${collecte.last_name || ''}`;
             
             return name.toLowerCase().includes(searchTerm) ||
@@ -132,7 +154,8 @@ document.addEventListener('DOMContentLoaded', () => {
                    responsable.toLowerCase().includes(searchTerm);
         });
         displayCollectes(filteredCollectes);
-    });
+        });
+    }
 
     // Add collecte popup management
     const addCollectePopup = document.getElementById('addCollectePopup');
@@ -144,6 +167,8 @@ document.addEventListener('DOMContentLoaded', () => {
         addCollectePopup.style.display = 'flex';
         // Populate responsable select
         await populateResponsableSelect(document.getElementById('collecte-responsable'));
+        // Populate location select
+        await populateLocationSelect(document.getElementById('collecte-location'));
     });
 
     // Close popup function
@@ -155,15 +180,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Handle add collecte form submission
     addCollecteForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
+        const actualTime = `${addCollecteForm.date.value} ${addCollecteForm.time.value}:00`;
         try {
             const newCollecte = {
-                name: addCollecteForm.name.value,
-                date: addCollecteForm.date.value,
-                time: addCollecteForm.time.value,
-                location: addCollecteForm.location.value,
-                description: addCollecteForm.description.value,
-                benevole_responsable: addCollecteForm.responsable.value // Use benevole ID
+                date: actualTime,
+                id_ville: Number(addCollecteForm.location.value),
+                benevole_responsable: Number(addCollecteForm.responsable.value)
             };
 
             const response = await fetch(`${API_BASE_URL}/collectes`, {
@@ -201,15 +223,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveCollecteBtn = document.getElementById('saveCollecteBtn');
     const deleteCollecteBtn = document.getElementById('deleteCollecteBtn');
     let currentCollecteIndex = -1;
+    let currentCollecteVilleId = null; // Store current collecte's ville ID
 
     // Function to show collecte profile popup
     async function showCollecteProfile(collecte) {
         currentCollecteIndex = collecte.id; // Store collecte ID
+        currentCollecteVilleId = collecte.id_ville; // Store ville ID for updates
         
-        // Update header content
-        const collecteName = collecte.name || `Collecte du ${formatDateShort(collecte.date)} à ${collecte.ville}`;
+        // Update header content - construct name from date and ville
+        const collecteName = `Collecte du ${formatDateShort(collecte.date)} à ${collecte.ville}`;
         document.getElementById('collecte-title').textContent = collecteName;
-        document.getElementById('collecte-datetime').textContent = formatDateTime(collecte.date, collecte.time);
+        
+        // Extract time from date for display
+        const dateParts = collecte.date.split('T');
+        const timeForDisplay = dateParts[1] ? dateParts[1].split(':').slice(0, 2).join(':') : '';
+        document.getElementById('collecte-datetime').textContent = formatDateTime(collecte.date, timeForDisplay);
         
         // Populate and set responsable select
         const responsableSelect = document.getElementById('profile-collecte-responsable');
@@ -227,12 +255,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 responsableSelect.value = matchingOption.value;
             }
         }
-
-        // Fill form with collecte data
-        console.log('Collecte data:', collecte); // Debug: see all collecte data
-        console.log('Date split:', collecte.date.split('T')); // Debug: see date parts
         
-        const dateParts = collecte.date.split('T');
+        // Fill form fields with collecte data
         document.getElementById('profile-collecte-date').value = dateParts[0] || '';
         
         // Extract time from the date field (format: HH:MM:SS or HH:MM:SS.sss)
@@ -241,7 +265,22 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('profile-collecte-time').value = timePart;
         }
         
-        document.getElementById('profile-collecte-location').value = collecte.ville || '';
+        // Populate location select dropdown
+        const locationSelect = document.getElementById('profile-collecte-location');
+        await populateLocationSelect(locationSelect);
+        
+        // Set selected ville using id_ville if available, otherwise try to match by name
+        if (collecte.id_ville) {
+            locationSelect.value = collecte.id_ville;
+        } else {
+            // Fallback: try to find by ville name
+            const options = Array.from(locationSelect.options);
+            const matchingOption = options.find(opt => opt.textContent === collecte.ville);
+            if (matchingOption) {
+                locationSelect.value = matchingOption.value;
+                currentCollecteVilleId = matchingOption.value;
+            }
+        }
 
         // Update status information
         document.getElementById('collecte-status').textContent = collecte.status || 'À venir';
@@ -282,15 +321,22 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Handle edit button click
-    editCollecteBtn.addEventListener('click', () => {
+    editCollecteBtn.addEventListener('click', async () => {
         // Make fields editable
-        Array.from(profileCollecteForm.elements).forEach(input => {
-            if (input.type !== 'button' && input.type !== 'submit' && 
-                !input.classList.contains('result-input')) {
-                if (input.tagName.toLowerCase() === 'select') {
-                    input.disabled = false;
+        const editableFields = [
+            'profile-collecte-date',
+            'profile-collecte-time',
+            'profile-collecte-location',
+            'profile-collecte-responsable'
+        ];
+        
+        editableFields.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field) {
+                if (field.tagName.toLowerCase() === 'select') {
+                    field.disabled = false;
                 } else {
-                    input.readOnly = false;
+                    field.readOnly = false;
                 }
             }
         });
@@ -307,13 +353,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentCollecteIndex === -1) return;
 
         try {
-            // 1. Gather all form data
+            // 1. Gather all form data and combine date/time
+            const dateValue = document.getElementById('profile-collecte-date').value;
+            const timeValue = document.getElementById('profile-collecte-time').value;
+            const combinedDateTime = `${dateValue} ${timeValue}:00`;
+            
             const updatedData = {
-                name: document.getElementById('collecte-title').textContent,
-                date: document.getElementById('profile-collecte-date').value,
-                time: document.getElementById('profile-collecte-time').value,
-                location: document.getElementById('profile-collecte-location').value,
-                benevole_responsable: document.getElementById('profile-collecte-responsable').value,
+                date: combinedDateTime,
+                id_ville: Number(document.getElementById('profile-collecte-location').value),
+                benevole_responsable: Number(document.getElementById('profile-collecte-responsable').value),
                 status: document.getElementById('collecte-status').textContent
             };
 
@@ -334,12 +382,20 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Collecte updated:', result);
             
             // 3. Lock all fields
-            Array.from(profileCollecteForm.elements).forEach(input => {
-                if (input.type !== 'button' && input.type !== 'submit') {
-                    if (input.tagName.toLowerCase() === 'select') {
-                        input.disabled = true;
+            const editableFields = [
+                'profile-collecte-date',
+                'profile-collecte-time',
+                'profile-collecte-location',
+                'profile-collecte-responsable'
+            ];
+            
+            editableFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    if (field.tagName.toLowerCase() === 'select') {
+                        field.disabled = true;
                     } else {
-                        input.readOnly = true;
+                        field.readOnly = true;
                     }
                 }
             });
