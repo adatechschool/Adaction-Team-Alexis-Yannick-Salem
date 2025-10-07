@@ -90,8 +90,7 @@ router.patch("/:id", async (req, res) => {
 
     const result = await db.query(
       `UPDATE collectes 
-       SET ${updateFields.join(", ")}, 
-           updated_at = CURRENT_TIMESTAMP
+       SET ${updateFields.join(", ")}
        WHERE id = $${valueIndex}
        RETURNING *`,
       values
@@ -119,6 +118,16 @@ router.delete("/:id", async (req, res) => {
     res.status(200).json({ message: "Collecte supprimée avec succès" });
   } catch (error) {
     console.error("Erreur lors de la suppression de la collecte:", error);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+router.get("/total", async (req, res) => {
+  try {
+    const result = await db.query(`SELECT COUNT(*) FROM collectes`);
+    res.status(200).json(result.rows);
+  } catch (error) {
+    console.error("Erreur lors de la recuperation du nombre total de collectes", error);
     res.status(500).json({ error: "Erreur serveur" });
   }
 });

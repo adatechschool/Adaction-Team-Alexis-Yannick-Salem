@@ -1,5 +1,3 @@
-const params = new URLSearchParams(window.location.search);
-const userID = params.get('id');
 const API_BASE_URL = 'http://192.168.7.103:3000';
 let benevoles = []; // Declare benevoles variable
 

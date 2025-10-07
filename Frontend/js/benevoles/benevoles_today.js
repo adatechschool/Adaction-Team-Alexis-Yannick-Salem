@@ -48,14 +48,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const collectes = await response.json();
             
             // Filter by status
+            
+            console.log('Fetched collectes:', collectes);
             const activeCollectes = collectes.filter(c => c.status === 'En cours' || c.status === 'in-progress');
-            const completedCollectes = collectes.filter(c => c.status === 'Terminée' || c.status === 'completed');
+            const completedCollectes = collectes.filter(c => c.status === 'Terminée' || c.date === 'completed');
             
             displayActiveCollectes(activeCollectes);
             displayCompletedCollectes(completedCollectes);
+            
+            return collectes; // Return the data for use by search
         } catch (error) {
             console.error('Error loading collectes:', error);
             alert('Erreur lors du chargement des collectes');
+            return [];
         }
     }
 
@@ -163,6 +168,15 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
+        // Get benevole ID from sessionStorage
+        const userData = JSON.parse(sessionStorage.getItem('userData') || '{}');
+        const benevoleId = userData.id;
+        
+        if (!benevoleId) {
+            alert('Erreur: ID bénévole manquant. Veuillez vous reconnecter.');
+            return;
+        }
+        
         // Get all waste inputs and their values
         const results = {};
         wasteTypes.forEach(waste => {
@@ -175,48 +189,63 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         try {
-            // Update collecte status to completed
-            const response = await fetch(`${API_BASE_URL}/collectes/${collecteId}`, {
-                method: 'PATCH',
+            // Save waste results to dechets_collectes table
+            console.log('Sending results:', {
+                id_collecte: collecteId,
+                id_benevole: benevoleId,
+                results: results
+            });
+
+            const resultsResponse = await fetch(`${API_BASE_URL}/dechets-collectes/results`, {
+                method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
-                    status: 'Terminée' // or 'completed' depending on your backend
+                    id_collecte: collecteId,
+                    id_benevole: benevoleId,
+                    results: results
                 })
             });
 
-            if (!response.ok) {
-                throw new Error('Failed to update collecte status');
+            console.log('Results response status:', resultsResponse.status);
+
+            if (!resultsResponse.ok) {
+                const errorData = await resultsResponse.json().catch(() => ({}));
+                console.error('Results error:', errorData);
+                throw new Error(errorData.error || 'Failed to save waste results');
             }
 
-            // Here you would also save the waste results to your backend
-            // For now, just log them
-            console.log('Collecte results:', results);
+            // Update collecte status to completed
+            const statusResponse = await fetch(`${API_BASE_URL}/collectes/${collecteId}`, {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    status: 'Terminée'
+                })
+            });
+
+            if (!statusResponse.ok) {
+                const errorData = await statusResponse.json().catch(() => ({}));
+                throw new Error(errorData.error || 'Failed to update collecte status');
+            }
 
             // Close popup and reload data
             closeResultsPopup();
-            loadCollectes();
+            await loadCollectes(); // Wait for data to reload
             
             alert('Résultats enregistrés avec succès!');
         } catch (error) {
             console.error('Error saving results:', error);
-            alert('Erreur lors de l\'enregistrement des résultats');
+            alert('Erreur lors de l\'enregistrement des résultats: ' + error.message);
         }
-        
-        // Refresh displays
-        displayActiveCollectes();
-        displayCompletedCollectes();
-        
-        // Close popup
-        closeResultsPopup();
     });
 
     // Waste types data (imported from dashboard.js)
     const wasteTypes = [
-        { type: 'Mégots de cigarette', icon: '🚬', quantity: 0 },
-        { type: 'Emballages plastiques', icon: '🥤', quantity: 0 },
-        { type: 'Bouteilles de verre', icon: '🍾', quantity: 0 },
-        { type: 'Articles de pêche dégradés', icon: '🎣', quantity: 0 },
-        { type: 'Déchets métalliques', icon: '🥫', quantity: 0 },
+        { type: 'Mégot de cigarette', icon: '🚬', quantity: 0 },
+        { type: 'Emballage plastique', icon: '🥤', quantity: 0 },
+        { type: 'Bouteille de verre', icon: '🍾', quantity: 0 },
+        { type: 'Article de pêche', icon: '🎣', quantity: 0 },
+        { type: 'Déchet métallique', icon: '🥫', quantity: 0 },
     ];
 
     // Function to create waste input cards
@@ -262,19 +291,31 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.querySelector('.search-input');
     searchInput.addEventListener('input', async (e) => {
         const searchTerm = e.target.value.toLowerCase();
-        const allCollectes = await loadCollectes();
-        const activeCollectes = allCollectes.filter(collecte => 
-            collecte.status === 'En cours' &&
-            (collecte.ville.toLowerCase().includes(searchTerm) ||
-             collecte.first_name.toLowerCase().includes(searchTerm) ||
-             collecte.last_name.toLowerCase().includes(searchTerm))
-        );
-        const container = document.querySelector('#today-section .collectes-cards');
-        container.innerHTML = '';
-        activeCollectes.forEach(collecte => {
-            const card = createCollecteCard(collecte);
-            container.appendChild(card);
-        });
+        
+        if (!searchTerm) {
+            // If search is empty, reload all collectes
+            loadCollectes();
+            return;
+        }
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}/collectes`);
+            const allCollectes = await response.json();
+            const activeCollectes = allCollectes.filter(collecte => 
+                (collecte.status === 'En cours' || collecte.status === 'in-progress') &&
+                (collecte.ville?.toLowerCase().includes(searchTerm) ||
+                 collecte.first_name?.toLowerCase().includes(searchTerm) ||
+                 collecte.last_name?.toLowerCase().includes(searchTerm))
+            );
+            const container = document.querySelector('#today-section .collectes-cards');
+            container.innerHTML = '';
+            activeCollectes.forEach(collecte => {
+                const card = createCollecteCard(collecte);
+                container.appendChild(card);
+            });
+        } catch (error) {
+            console.error('Error searching collectes:', error);
+        }
     });
 
     // Close popup when clicking outside
@@ -296,7 +337,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function openResultsDetailsPopup(collecte) {
+    async function openResultsDetailsPopup(collecte) {
         const popup = document.getElementById('resultsDetailsPopup');
         
         // Update popup content
@@ -304,22 +345,44 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('results-datetime').textContent = formatDate(collecte.date);
         document.getElementById('results-location').textContent = collecte.ville;
 
-        // Update waste cards
+        // Fetch waste results from dechets_collectes table
         const wasteCardsContainer = document.getElementById('results-waste-cards');
-        // Note: If waste results are stored in collecte.results as JSON, parse and display
-        // For now, display placeholder or fetch from API if available
-        if (collecte.results) {
-            const results = typeof collecte.results === 'string' ? JSON.parse(collecte.results) : collecte.results;
-            wasteCardsContainer.innerHTML = Object.entries(results)
-                .map(([type, {value, icon}]) => `
-                    <div class="waste-card">
-                        <span class="waste-icon">${icon}</span>
-                        <span class="waste-type">${type}</span>
-                        <span class="waste-quantity">${value}</span>
-                    </div>
-                `).join('');
-        } else {
-            wasteCardsContainer.innerHTML = '<p>Aucun résultat disponible</p>';
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}/dechets-collectes/results/${collecte.id}`);
+            if (response.ok) {
+                const results = await response.json();
+                
+                if (results.length > 0) {
+                    // Group results by waste type
+                    const groupedResults = {};
+                    results.forEach(result => {
+                        if (!groupedResults[result.dechet_name]) {
+                            groupedResults[result.dechet_name] = {
+                                icon: result.icon,
+                                quantity: 0
+                            };
+                        }
+                        groupedResults[result.dechet_name].quantity += result.dechet_quantite || 0;
+                    });
+                    
+                    wasteCardsContainer.innerHTML = Object.entries(groupedResults)
+                        .map(([type, data]) => `
+                            <div class="waste-card">
+                                <span class="waste-icon">${data.icon}</span>
+                                <span class="waste-type">${type}</span>
+                                <span class="waste-quantity">${data.quantity}</span>
+                            </div>
+                        `).join('');
+                } else {
+                    wasteCardsContainer.innerHTML = '<p>Aucun résultat disponible</p>';
+                }
+            } else {
+                wasteCardsContainer.innerHTML = '<p>Erreur lors du chargement des résultats</p>';
+            }
+        } catch (error) {
+            console.error('Error loading results:', error);
+            wasteCardsContainer.innerHTML = '<p>Erreur lors du chargement des résultats</p>';
         }
 
         // Show the popup
@@ -330,10 +393,5 @@ document.addEventListener('DOMContentLoaded', () => {
     createWasteInputCards();
     
     // Load and display collectes from backend
-    loadCollectes().then(collectes => {
-        displayActiveCollectes(collectes);
-        displayCompletedCollectes(collectes);
-    }).catch(error => {
-        console.error('Erreur lors du chargement des collectes:', error);
-    });
+    loadCollectes();
 });

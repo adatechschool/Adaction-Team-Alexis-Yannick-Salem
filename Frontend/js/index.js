@@ -6,6 +6,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const signupForm = document.getElementById('signup-form');
     const signupCity = document.getElementById('signup-city');
     const citiesList = document.getElementById('cities-list');
+    
+    // Store city ID mapping
+    let cityMap = new Map(); // Maps city name to city ID
 
     // Handle signup type switching
     const signupTypeBtns = document.querySelectorAll('.signup-tab-btn');
@@ -17,10 +20,24 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Update active states
             signupTypeBtns.forEach(b => b.classList.remove('active'));
-            signupSections.forEach(s => s.classList.remove('active'));
+            signupSections.forEach(s => {
+                s.classList.remove('active');
+                // Disable required on hidden sections
+                s.querySelectorAll('input[required]').forEach(input => {
+                    input.removeAttribute('required');
+                });
+            });
             
             btn.classList.add('active');
-            document.getElementById(`${signupType}-signup`).classList.add('active');
+            const activeSection = document.getElementById(`${signupType}-signup`);
+            activeSection.classList.add('active');
+            
+            // Enable required on active section
+            activeSection.querySelectorAll('input').forEach(input => {
+                if (input.type !== 'submit') {
+                    input.setAttribute('required', '');
+                }
+            });
 
             // Clear form fields when switching
             clearForm(signupForm);
@@ -40,6 +57,11 @@ document.addEventListener('DOMContentLoaded', () => {
     clearForm(loginForm);
     clearForm(signupForm);
     citiesList.innerHTML = '';
+    
+    // Initialize required attributes - disable on hidden section
+    document.getElementById('association-signup').querySelectorAll('input').forEach(input => {
+        input.removeAttribute('required');
+    });
 
     // Clear forms when switching tabs
     tabButtons.forEach(button => {
@@ -87,10 +109,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update datalist options
     function updateCityOptions(cities) {
         citiesList.innerHTML = '';
+        cityMap.clear(); // Clear previous mappings
         cities.forEach(city => {
             const option = document.createElement('option');
-            option.value = `${city.name}`;
+            option.value = city.name;
+            option.dataset.cityId = city.id; // Store ID in data attribute
             citiesList.appendChild(option);
+            // Store in map for easy lookup
+            cityMap.set(city.name, city.id);
         });
     }
 
@@ -151,6 +177,13 @@ document.addEventListener('DOMContentLoaded', () => {
             sessionStorage.setItem('username', username);
             sessionStorage.setItem('userData', JSON.stringify(data));
 
+            // Redirect based on user type - use replace to prevent back button issues
+            if (userType === 'association') {
+                window.location.replace('/associations/dashboard');
+            } else {
+                window.location.replace('/benevoles/today');
+            }
+
         } catch (error) {
             console.error('Login error:', error);
             alert(error.message || 'Nom d\'utilisateur ou mot de passe incorrect');
@@ -165,13 +198,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (formType === 'benevole') {
             const name = document.getElementById('signup-name').value;
+            const lastName = document.getElementById('signup-last-name').value;
             const username = document.getElementById('signup-username').value;
-            const city = document.getElementById('signup-city').value;
+            const cityName = document.getElementById('signup-city').value;
             const password = document.getElementById('signup-password').value;
             const confirmPassword = document.getElementById('signup-confirm-password').value;
 
             if (password !== confirmPassword) {
                 alert('Les mots de passe ne correspondent pas!');
+                return;
+            }
+            
+            // Get city ID from the map
+            const cityId = cityMap.get(cityName);
+            if (!cityId) {
+                alert('Veuillez sélectionner une ville valide de la liste');
                 return;
             }
 
@@ -185,25 +226,31 @@ document.addEventListener('DOMContentLoaded', () => {
                         username,
                         password,
                         first_name: name,
-                        last_name: '',  // Add this field if needed
-                        id_ville: city // You might need to get the actual city ID
+                        last_name: lastName,
+                        id_ville: cityId // Now sending the actual ID
                     })
                 });
+
+                // Check if response is JSON
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error('Le serveur n\'a pas renvoyé une réponse JSON valide');
+                }
 
                 const data = await response.json();
                 
                 if (!response.ok) {
-                    throw new Error(data.error || 'Error during signup');
+                    throw new Error(data.error || 'Erreur lors de l\'inscription');
                 }
 
                 // Store user info and redirect
                 sessionStorage.setItem('userType', 'benevole');
                 sessionStorage.setItem('username', username);
                 sessionStorage.setItem('userData', JSON.stringify(data));
-                window.location.href = `/benevoles/today&id=${data.id}`;
+                window.location.replace('/benevoles/today');
             } catch (error) {
                 console.error('Signup error:', error);
-                alert(error.message || 'Error during signup');
+                alert(error.message || 'Erreur lors de l\'inscription. Veuillez réessayer.');
             }
         } else {
             const name = document.getElementById('signup-asso-name').value;
@@ -230,26 +277,27 @@ document.addEventListener('DOMContentLoaded', () => {
                     })
                 });
 
+                // Check if response is JSON
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error('Le serveur n\'a pas renvoyé une réponse JSON valide');
+                }
+
                 const data = await response.json();
                 
                 if (!response.ok) {
-                    throw new Error(data.error || 'Error during signup');
+                    throw new Error(data.error || 'Erreur lors de l\'inscription');
                 }
 
                 // Store user info and redirect
                 sessionStorage.setItem('userType', 'association');
                 sessionStorage.setItem('username', username);
                 sessionStorage.setItem('userData', JSON.stringify(data));
-                window.location.href = `/associations/dashboard&id=${data.id}`;
+                window.location.replace('/associations/dashboard');
             } catch (error) {
                 console.error('Signup error:', error);
-                alert(error.message || 'Error during signup');
+                alert(error.message || 'Erreur lors de l\'inscription. Veuillez réessayer.');
             }
-
-            // Store user info and redirect
-            sessionStorage.setItem('userType', 'association');
-            sessionStorage.setItem('username', username);
-            window.location.href = '/associations/dashboard';
         }
     });
 });

@@ -76,8 +76,10 @@ router.post("/signup", async (req, res) => {
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     const reslt = await db.query(
-      `INSERT INTO benevoles (username, password, first_name,last_name,  points_collectes,  id_ville, date_creation)
-      VALUES ('${username}', '${hashedPassword}', '${first_name}','${last_name}',  0,  ${id_ville}, current_timestamp)`
+      `INSERT INTO benevoles (username, password, first_name, last_name, points_collectes, id_ville, date_creation)
+      VALUES ($1, $2, $3, $4, 0, $5, current_timestamp)
+      RETURNING id, username, first_name, last_name, points_collectes, id_ville`,
+      [username, hashedPassword, first_name, last_name || '', id_ville]
     );
     res.status(201).json(reslt.rows[0]);
   } catch (error) {
@@ -231,5 +233,17 @@ router.post('/logout', async(req,res)=>{
   
 })
 
+router.get("/total", async (req, res) => {
+  try {
+    const reslt = await db.query(`SELECT COUNT(*) FROM benevoles`);
+    res.status(200).json(reslt.rows);
+  } catch (error) {
+    console.error(
+      "Erreur lors de la recuperation des donnees benevoles",
+      error
+    );
+    res.status(500).json("Erreur serveur");
+  }
+});
 
 export default router;

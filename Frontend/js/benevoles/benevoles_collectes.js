@@ -16,6 +16,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+
+    function formatDateShort(date) {
+        const options = { month: 'short', day: 'numeric' };
+        return new Date(date).toLocaleDateString('fr-FR', options);
+    }
     // Current user ID (mock) - Replace with actual user authentication
     const currentUserId = "user123";
 
