@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const API_BASE_URL = 'http://192.168.7.103:3000';
+    const API_BASE_URL = 'http://localhost:3000';
     
     // Get DOM elements
     const resultsPopup = document.getElementById('resultsCollectePopup');
@@ -49,9 +49,14 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Filter by status
             
-            console.log('Fetched collectes:', collectes);
-            const activeCollectes = collectes.filter(c => c.status === 'En cours' || c.status === 'in-progress');
-            const completedCollectes = collectes.filter(c => c.status === 'Terminée' || c.date === 'completed');
+
+            const today = new Date().toISOString().split('T')[0];
+
+            const activeCollectes = collectes.filter(c => {
+
+                return c.status === 'En cours' || c.date.split("T")[0] === today
+            });
+            const completedCollectes = collectes.filter(c => c.status === 'Terminée');
             
             displayActiveCollectes(activeCollectes);
             displayCompletedCollectes(completedCollectes);
