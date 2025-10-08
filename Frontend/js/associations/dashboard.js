@@ -29,6 +29,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
+    // Total waste quantities
+    const wasteQuantitiesSelector = document.getElementById('dechet-stat');
+    const totalWasteResponse = await fetch('http://192.168.7.103:3000/dechets/total');
+    const totalWasteData = await totalWasteResponse.json();
+    console.log('Total Waste Data:', totalWasteData[0].total_dechets); // Debug log
+    wasteQuantitiesSelector.innerHTML= `<p>${totalWasteData[0].total_dechets}</p>`;
+
+    // Total number of volunteers
+    const volonteersQuantitySelector = document.getElementById('benevole-stat');
+    const totalVolonteersResponse = await fetch('http://192.168.7.103:3000/benevole/total');
+    const totalBenevole = await totalVolonteersResponse.json();
+    console.log('Total benevole Data:', totalBenevole[0].count); // Debug log
+    volonteersQuantitySelector.innerHTML= `<p>${totalBenevole[0].count}</p>`;
+
+    // Total number of volunteers
+    const collecteQuantitySelector = document.getElementById('collecte-stat');
+    const totalCollecteResponse = await fetch('http://192.168.7.103:3000/collectes/total');
+    const totalCollecte = await totalCollecteResponse.json();
+    console.log('Total Collecte Data:', totalCollecte[0].count); // Debug log
+    collecteQuantitySelector.innerHTML= `<p>${totalCollecte[0].count}</p>`;
+
+
     // Waste types data
     const wasteResponse = await fetch('http://192.168.7.103:3000/dechets/')
     const wasteTypes = await wasteResponse.json();

@@ -22,6 +22,14 @@ router.get("/", async (req, res) => {
   }
 });
 
-
+router.get("/total", async (req, res) => {
+  try {
+    const reslt = await db.query('SELECT SUM(dechet_quantite) AS total_dechets FROM dechets_collectes');
+    res.status(200).json(reslt.rows);
+  } catch (error) {
+    console.error("Erreur lors de la recuperation des dechets", error);
+    res.status(500).json("Erreur serveur");
+  }
+});
 
 export default router;

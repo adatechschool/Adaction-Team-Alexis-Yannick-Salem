@@ -1,5 +1,5 @@
-const params = new URLSearchParams(window.location.search);
-const userID = params.get('id');
+const API_BASE_URL = 'http://192.168.7.103:3000';
+let benevoles = []; // Declare benevoles variable
 
 document.addEventListener('DOMContentLoaded', () => {
     // Update active nav link based on current page
@@ -14,55 +14,116 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    async function populateLocationSelect(selectElement) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/ville`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch villes');
+            }
+            const villes = await response.json();
+
+            selectElement.innerHTML = '<option value="">Sélectionner une ville</option>';
+            villes.forEach(ville => {
+                const option = document.createElement('option');
+                option.value = ville.id; // Use ID as value
+                option.textContent = ville.name;
+                selectElement.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error fetching villes:', error);
+        }
+    }
+
     // Function to populate the cards with bénévoles data
     async function displayBenevoles() {
-        const cardsContainer = document.querySelector('.benevoles-cards');
-        
-        // Clear existing cards
-        cardsContainer.innerHTML = '';
-        
-        // Fetch backend data here
-        const response = await fetch(`http://192.168.7.103:3000/benevole/villes`);
-        const data = await response.json();
+        try {
+            const cardsContainer = document.querySelector('.benevoles-cards');
+            
+            // Clear existing cards
+            cardsContainer.innerHTML = '';
+            
+            // Fetch backend data here
+            const response = await fetch(`${API_BASE_URL}/benevole/villes`);
+            
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Erreur lors de la récupération des bénévoles');
+            }
+            
+            const data = await response.json();
 
-        if (!response.ok) {
-            throw new Error(data.error || 'Erreur lors de la récupération des bénévoles');
+            // Store data in benevoles array
+            benevoles = data;
+
+            // Add each bénévole as a card
+            data.forEach((benevole, index) => {
+                const card = document.createElement('div');
+                card.className = 'benevole-card';
+                
+                const benevoleInfo = document.createElement('div');
+                benevoleInfo.className = 'benevole-info';
+                
+                const benevoleName = document.createElement('div');
+                benevoleName.className = 'benevole-name';
+                benevoleName.textContent = `${benevole.first_name} ${benevole.last_name}`;
+                
+                const benevoleCity = document.createElement('div');
+                benevoleCity.className = 'benevole-city';
+                benevoleCity.textContent = benevole.ville_name;
+                
+                const benevolePoints = document.createElement('div');
+                benevolePoints.className = 'benevole-points';
+                benevolePoints.textContent = `${benevole.points_collectes} points`;
+                
+                benevoleInfo.appendChild(benevoleName);
+                benevoleInfo.appendChild(benevoleCity);
+                benevoleInfo.appendChild(benevolePoints);
+                
+                const cardActions = document.createElement('div');
+                cardActions.className = 'card-actions';
+                
+                const viewBtn = document.createElement('button');
+                viewBtn.className = 'action-button view-btn';
+                viewBtn.setAttribute('data-index', index);
+                viewBtn.textContent = 'Voir profil';
+                viewBtn.addEventListener('click', () => showProfile(benevole, index));
+                
+                cardActions.appendChild(viewBtn);
+                card.appendChild(benevoleInfo);
+                card.appendChild(cardActions);
+                cardsContainer.appendChild(card);
+            });
+        } catch (error) {
+            console.error('Error displaying benevoles:', error);
+            alert('Erreur lors du chargement des bénévoles');
         }
-
-        // Add each bénévole as a card
-        data.forEach((benevole, index) => {
-            const card = document.createElement('div');
-            card.className = 'benevole-card';
-            card.innerHTML = `
-                <div class="benevole-info">
-                    <div class="benevole-name">${benevole.first_name} ${benevole.last_name}</div>
-                    <div class="benevole-city">${benevole.ville_name}</div>
-                    <div class="benevole-points">${benevole.points_collectes} points</div>
-                </div>
-                <div class="card-actions">
-                    <button class="action-button view-btn" data-index="${index}">
-                        Voir profil
-                    </button>
-                </div>
-            `;
-            card.querySelector('.view-btn').addEventListener('click', () => showProfile(benevole, index));
-            cardsContainer.appendChild(card);
-        });
     }
 
     // Initial display of bénévoles
-    displayBenevoles();
+    displayBenevoles().catch(error => {
+        console.error('Error during initial display:', error);
+    });
 
     // Handle search functionality
     const searchInput = document.querySelector('.search-input');
-    searchInput.addEventListener('input', (e) => {
-        const searchTerm = e.target.value.toLowerCase();
-        const filteredBenevoles = benevoles.filter(benevole => 
-            benevole.name.toLowerCase().includes(searchTerm) ||
-            benevole.city.toLowerCase().includes(searchTerm)
-        );
-        displayBenevoles(filteredBenevoles);
-    });
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const cards = document.querySelectorAll('.benevole-card');
+            
+            cards.forEach((card, index) => {
+                const benevole = benevoles[index];
+                const name = `${benevole.first_name} ${benevole.last_name}`.toLowerCase();
+                const city = (benevole.ville_name || '').toLowerCase();
+                
+                if (name.includes(searchTerm) || city.includes(searchTerm)) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    }
 
     // Popup management
     const popup = document.getElementById('addBenevolePopup');
@@ -70,9 +131,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('addBenevoleForm');
 
     // Show popup when clicking the add button
-    addButton.addEventListener('click', () => {
-        popup.style.display = 'flex';
-    });
+    if (addButton) {
+        addButton.addEventListener('click', async () => {
+            popup.style.display = 'flex';
+            // Populate city dropdown with all cities from API
+            await populateLocationSelect(document.getElementById('benevole-city'));
+        });
+    }
 
     // Close popup function (make it global for the cancel button)
     window.closePopup = function() {
@@ -80,90 +145,48 @@ document.addEventListener('DOMContentLoaded', () => {
         form.reset();
     }
 
-    // City search functionality
-    const citySearch = document.getElementById('citySearch');
-    const cityResults = document.getElementById('cityResults');
-    const cityInput = document.getElementById('city');
-    let debounceTimer;
-
-    citySearch.addEventListener('input', (e) => {
-        clearTimeout(debounceTimer);
-        const searchTerm = e.target.value;
-
-        if (searchTerm.length < 3) {
-            cityResults.innerHTML = '';
-            cityResults.classList.remove('active');
-            return;
-        }
-
-        debounceTimer = setTimeout(async () => {
-            try {
-                const response = await fetch(`http://192.168.7.103:3000/ville`);
-                const cities = await response.json();
-                
-                cityResults.innerHTML = '';
-                if (cities.length > 0) {
-                    cities.forEach(city => {
-                        const div = document.createElement('div');
-                        div.className = 'city-option';
-                        div.textContent = `${city.name})`;
-                        div.addEventListener('click', () => {
-                            citySearch.value = `${city.name})`;
-                            cityInput.value = city.id;
-                            cityResults.classList.remove('active');
-                        });
-                        cityResults.appendChild(div);
-                    });
-                    cityResults.classList.add('active');
-                } else {
-                    cityResults.classList.remove('active');
-                }
-            } catch (error) {
-                console.error('Error fetching cities:', error);
-            }
-        }, 300);
-    });
-
-    // Hide city results when clicking outside
-    document.addEventListener('click', (e) => {
-        if (!citySearch.contains(e.target) && !cityResults.contains(e.target)) {
-            cityResults.classList.remove('active');
-        }
-    });
-
     // Handle form submission
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
         e.preventDefault();
         
         // Check if a city was selected
-        if (!cityInput.value) {
+        const cityValue = document.getElementById('benevole-city').value;
+        if (!cityValue) {
             alert('Veuillez sélectionner une ville dans la liste');
             return;
         }
 
-        const resp = fetch('http://192.168.7.103:3000/benevole/signup', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                username: form.username.value,
-                password: form.password.value,
-                first_name: form.first_name.value,
-                last_name: form.last_name.value,
-                id_ville: cityInput.value,
-                points_collectes: 0,
-            })
-        });
-        
-        if (!resp.ok) {
-            alert('Erreur lors de l\'ajout du bénévole');
-            return;
-        }
+        try {
+            const resp = await fetch(`${API_BASE_URL}/benevole/signup`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    username: form.username.value,
+                    password: form.password.value,
+                    first_name: form.first_name.value,
+                    last_name: form.last_name.value,
+                    id_ville: Number(cityValue),
+                    points_collectes: 0,
+                })
+            });
+            
+            if (!resp.ok) {
+                const error = await resp.json();
+                alert(error.error || 'Erreur lors de l\'ajout du bénévole');
+                return;
+            }
 
-        // Update display
-        displayBenevoles();
-        
-        // Close popup and reset form
-        closePopup();
+            // Update display
+            await displayBenevoles();
+            
+            // Close popup and reset form
+            closePopup();
+            
+            alert('Bénévole ajouté avec succès!');
+        } catch (error) {
+            console.error('Error adding benevole:', error);
+            alert('Erreur lors de l\'ajout du bénévole');
+        }
     });
 
     // Profile popup elements
@@ -172,24 +195,42 @@ document.addEventListener('DOMContentLoaded', () => {
     const editBtn = document.getElementById('editProfileBtn');
     const saveBtn = document.getElementById('saveProfileBtn');
     const deleteBtn = document.getElementById('deleteProfileBtn');
-    let currentBenevoleIndex = -1;
+    let currentBenevoleId = -1; // Store ID instead of index
+
+    // Check if profile elements exist
+    if (!profilePopup || !profileForm || !editBtn || !saveBtn || !deleteBtn) {
+        console.error('Profile popup elements not found');
+        return;
+    }
 
     // Function to show profile popup
-    function showProfile(benevole, index) {
-        currentBenevoleIndex = index;
+    async function showProfile(benevole, index) {
+        currentBenevoleId = benevole.id; // Store ID instead of index
         
         // Fill form with benevole data
         profileForm.elements.username.value = benevole.username;
         profileForm.elements.first_name.value = benevole.first_name;
         profileForm.elements.last_name.value = benevole.last_name;
-        profileForm.elements.citySearch.value = `${benevole.ville_name}`;
-        profileForm.elements.city.value = benevole.ville_name;
         profileForm.elements.points.value = benevole.points_collectes;
+
+        // Populate city dropdown
+        const citySelect = profileForm.querySelector('#profile-benevole-city');
+        if (citySelect) {
+            await populateLocationSelect(citySelect);
+            // Set selected city
+            if (benevole.id_ville) {
+                citySelect.value = benevole.id_ville;
+            }
+        }
 
         // Set all inputs to readonly initially
         Array.from(profileForm.elements).forEach(input => {
             if (input.type !== 'button' && input.type !== 'submit') {
-                input.readOnly = true;
+                if (input.tagName.toLowerCase() === 'select') {
+                    input.disabled = true;
+                } else {
+                    input.readOnly = true;
+                }
             }
         });
 
@@ -203,8 +244,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Close profile popup function
     window.closeProfilePopup = function() {
-        profilePopup.style.display = 'none';
-        profileForm.reset();
+        if (profilePopup) {
+            profilePopup.style.display = 'none';
+        }
+        if (profileForm) {
+            profileForm.reset();
+        }
     }
 
     // Handle edit button click
@@ -212,7 +257,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Make fields editable
         Array.from(profileForm.elements).forEach(input => {
             if (input.type !== 'button' && input.type !== 'submit' && input.name !== 'points') {
-                input.readOnly = false;
+                if (input.tagName.toLowerCase() === 'select') {
+                    input.disabled = false;
+                } else {
+                    input.readOnly = false;
+                }
             }
         });
 
@@ -225,30 +274,69 @@ document.addEventListener('DOMContentLoaded', () => {
     saveBtn.addEventListener('click', async (e) => {
         e.preventDefault();
         
-        if (currentBenevoleIndex === -1) return;
+        if (currentBenevoleId === -1) return;
 
         try {
-            // 1. Gather all form data
-            const updatedBenevole = {
-                username: profileForm.elements.username.value,
-                first_name: profileForm.elements.first_name.value,
-                last_name: profileForm.elements.last_name.value,
-                name: `${profileForm.elements.first_name.value} ${profileForm.elements.last_name.value}`,
-                city: profileForm.elements.city.value,
-                points: parseInt(profileForm.elements.points.value),
-            };
-
-            // 2. Save to database (simulated for now)
-            // TODO: Replace with actual API call
-            // await saveBenevoleToDatabase(updatedBenevole);
+            // Find current benevole by ID
+            const currentBenevole = benevoles.find(b => b.id === currentBenevoleId);
+            if (!currentBenevole) {
+                alert('Bénévole introuvable');
+                return;
+            }
             
-            // 3. Update local data
-            benevoles[currentBenevoleIndex] = updatedBenevole;
+            // 1. Gather all form data - only send changed fields
+            const updatedBenevole = {};
+            
+            // Only include username if it changed
+            const newUsername = profileForm.elements.username.value.trim();
+            if (newUsername !== currentBenevole.username) {
+                updatedBenevole.username = newUsername;
+            }
+            
+            // Only include first_name if it changed
+            const newFirstName = profileForm.elements.first_name.value.trim();
+            if (newFirstName !== currentBenevole.first_name) {
+                updatedBenevole.first_name = newFirstName;
+            }
+            
+            // Only include last_name if it changed
+            const newLastName = profileForm.elements.last_name.value.trim();
+            if (newLastName !== currentBenevole.last_name) {
+                updatedBenevole.last_name = newLastName;
+            }
+            
+            // Only include id_ville if it changed
+            const newIdVille = Number(profileForm.querySelector('#profile-benevole-city').value);
+            if (newIdVille !== currentBenevole.id_ville) {
+                updatedBenevole.id_ville = newIdVille;
+            }
+            
+            // Check if there's anything to update
+            if (Object.keys(updatedBenevole).length === 0) {
+                alert('Aucune modification détectée');
+                return;
+            }
+
+            // 2. Send PATCH request to API
+            const response = await fetch(`${API_BASE_URL}/benevole/${currentBenevole.id}`, {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(updatedBenevole)
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to update benevole');
+            }
             
             // 4. Lock all fields
             Array.from(profileForm.elements).forEach(input => {
                 if (input.type !== 'button' && input.type !== 'submit') {
-                    input.readOnly = true;
+                    if (input.tagName.toLowerCase() === 'select') {
+                        input.disabled = true;
+                    } else {
+                        input.readOnly = true;
+                    }
                 }
             });
             
@@ -256,8 +344,12 @@ document.addEventListener('DOMContentLoaded', () => {
             editBtn.style.display = 'block';
             saveBtn.style.display = 'none';
 
+            await closeProfilePopup();
+
             // 6. Update display
-            displayBenevoles(benevoles);
+            await displayBenevoles();
+            
+            alert('Bénévole mis à jour avec succès!');
 
         } catch (error) {
             // Handle any errors that occur during save
@@ -267,13 +359,28 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Handle delete button click
-    deleteBtn.addEventListener('click', () => {
-        if (currentBenevoleIndex === -1) return;
+    deleteBtn.addEventListener('click', async () => {
+        if (currentBenevoleId === -1) return;
 
         if (confirm('Êtes-vous sûr de vouloir supprimer ce bénévole ?')) {
-            benevoles.splice(currentBenevoleIndex, 1);
-            displayBenevoles(benevoles);
-            closeProfilePopup();
+            try {
+                const response = await fetch(`${API_BASE_URL}/benevole/${currentBenevoleId}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to delete benevole');
+                }
+
+                await displayBenevoles();
+                closeProfilePopup();
+                
+                alert('Bénévole supprimé avec succès!');
+            } catch (error) {
+                console.error('Error deleting benevole:', error);
+                alert('Erreur lors de la suppression du bénévole');
+            }
         }
     });
 });
