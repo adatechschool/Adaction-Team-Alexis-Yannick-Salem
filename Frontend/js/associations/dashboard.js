@@ -66,6 +66,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     const uniqueWasteTypes = [...new Set(wasteTypes.map(waste => waste.dechet_name))].sort();
+    console.log('uniqueWasteTypes:', uniqueWasteTypes);
     const wasteSelect = document.getElementById('waste-name-filter');
     uniqueWasteTypes.forEach(waste => {
         const option = document.createElement('option');
@@ -119,14 +120,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         wasteGrid.innerHTML = '';
         wastesToDisplay.forEach(waste => {
-            const formattedDate = formatDate(waste.date);
             const card = document.createElement('div');
             card.className = 'waste-card';
             card.innerHTML = `
                 <div class="waste-icon">${waste.icon}</div>
                 <h3 class="waste-type">${waste.dechet_name}</h3>
-                <p class="waste-date">📅 ${formattedDate}</p>
-                <p class="waste-location">📍 ${waste.ville_name}</p>
                 <p class="waste-quantity">${waste.total_dechet}</p>
             `;
             wasteGrid.appendChild(card);

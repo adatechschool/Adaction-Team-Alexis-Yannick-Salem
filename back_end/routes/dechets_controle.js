@@ -3,6 +3,17 @@ import { db } from "../db/db.js";
 
 const router = Router();
 
+// Get all waste types (for form inputs)
+router.get("/types", async (req, res) => {
+  try {
+    const result = await db.query('SELECT id, name, icon, score FROM dechets ORDER BY id');
+    res.status(200).json(result.rows);
+  } catch (error) {
+    console.error("Erreur lors de la recuperation des types de dechets", error);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
 // Récupérer les déchets collectés dans une ville entre deux dates
 router.get("/", async (req, res) => {
   try {

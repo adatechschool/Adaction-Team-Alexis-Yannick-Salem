@@ -73,6 +73,8 @@ router.post("/results", async (req, res) => {
 
     // For each waste type in results
     for (const [wasteType, wasteInfo] of Object.entries(wasteData)) {
+      console.log(`Processing waste type: ${wasteType}`, wasteInfo);
+      console.log(`Current dechetsMap:`, dechetsMap);
       const dechetId = dechetsMap[wasteType];
       
       if (!dechetId) {
@@ -82,7 +84,8 @@ router.post("/results", async (req, res) => {
 
       const quantity = wasteInfo.value || 0;
 
-      // Check if this benevole already has a result for this waste type in this collecte
+      if (quantity > 0) {
+        // Check if this benevole already has a result for this waste type in this collecte
       const existingResult = await db.query(
         `SELECT * FROM dechets_collectes 
          WHERE id_collecte = $1 AND id_benevole = $2 AND dechet_id = $3`,
@@ -108,7 +111,7 @@ router.post("/results", async (req, res) => {
           [collecteId, benevoleId, dechetId, quantity]
         );
         insertedResults.push(inserted.rows[0]);
-      }
+      }}
     }
 
     res.status(201).json({ 

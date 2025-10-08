@@ -1,9 +1,41 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const API_BASE_URL = 'http://192.168.7.103:3000';
     
     // Get DOM elements
     const resultsPopup = document.getElementById('resultsCollectePopup');
     const resultsForm = document.getElementById('resultsCollecteForm');
+
+    // Load waste types FIRST before doing anything else
+    let wasteTypes = [];
+    try {
+        const wasteTypesAPI = await fetch(`${API_BASE_URL}/dechets/types`);
+        if (!wasteTypesAPI.ok) {
+            throw new Error(`Failed to fetch waste types: ${wasteTypesAPI.status}`);
+        }
+        wasteTypes = await wasteTypesAPI.json();
+        
+        // Validate wasteTypes is an array with valid data
+        if (!Array.isArray(wasteTypes)) {
+            console.error('wasteTypes is not an array:', wasteTypes);
+            throw new Error('Format de données invalide pour les types de déchets');
+        }
+        
+        if (wasteTypes.length === 0) {
+            console.warn('No waste types returned from API');
+            throw new Error('Aucun type de déchet trouvé');
+        }
+        
+        // Check if waste types have required properties
+        const invalidWastes = wasteTypes.filter(w => !w.name && !w.type);
+        if (invalidWastes.length > 0) {
+            console.error('Some waste types missing name property:', invalidWastes);
+        }
+        
+    } catch (error) {
+        console.error('Error loading waste types:', error);
+        alert('Erreur lors du chargement des types de déchets: ' + error.message);
+        return; // Stop initialization if waste types can't be loaded
+    }
 
     // Update active nav link based on current page
     const currentPath = window.location.pathname;
@@ -35,9 +67,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Initialize the page
-    loadCollectes();
-
     // Function to load collectes from API
     async function loadCollectes() {
         try {
@@ -48,10 +77,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const collectes = await response.json();
             
             // Filter by status
-            
-            console.log('Fetched collectes:', collectes);
-            const activeCollectes = collectes.filter(c => c.status === 'En cours' || c.status === 'in-progress');
-            const completedCollectes = collectes.filter(c => c.status === 'Terminée' || c.date === 'completed');
+            const today = new Date().toISOString().split('T')[0];
+            const activeCollectes = collectes.filter(c => {
+                return c.status === 'En cours' || (c.date.split("T")[0] === today && (c.status === 'À venir' || c.status === 'in-progress'));
+            });
+            const completedCollectes = collectes.filter(c => c.status === 'Terminée');
             
             displayActiveCollectes(activeCollectes);
             displayCompletedCollectes(completedCollectes);
@@ -179,12 +209,23 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Get all waste inputs and their values
         const results = {};
+        let pointsCollectes = 0; // Changed from const to let so we can accumulate points
         wasteTypes.forEach(waste => {
-            const inputId = waste.type.toLowerCase().replace(/\s+/g, '-');
+            // API returns {id, name, icon, score}, not {type, icon}
+            const wasteName = waste.name || waste.type;
+            
+            // Skip if wasteName is undefined or null
+            if (!wasteName) {
+                console.warn('Skipping waste with undefined name:', waste);
+                return;
+            }
+            
+            const inputId = wasteName.toLowerCase().replace(/\s+/g, '-');
             const input = document.getElementById(inputId);
             if (input) {
                 const value = parseFloat(input.value) || 0;
-                results[waste.type] = {value:value, icon:waste.icon};
+                results[wasteName] = {value:value, icon:waste.icon};
+                pointsCollectes += value * (waste.score || 0);
             }
         });
 
@@ -193,7 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Sending results:', {
                 id_collecte: collecteId,
                 id_benevole: benevoleId,
-                results: results
+                results: results,
             });
 
             const resultsResponse = await fetch(`${API_BASE_URL}/dechets-collectes/results`, {
@@ -206,12 +247,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
             });
 
+            const pointsCollectesResponse = await fetch(`${API_BASE_URL}/benevole/points`, {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    id: benevoleId,
+                    points: pointsCollectes
+                })
+            });
+
             console.log('Results response status:', resultsResponse.status);
+            console.log('Points collecte response status:', pointsCollectesResponse.status);
 
             if (!resultsResponse.ok) {
                 const errorData = await resultsResponse.json().catch(() => ({}));
                 console.error('Results error:', errorData);
                 throw new Error(errorData.error || 'Failed to save waste results');
+            }
+
+            if (!pointsCollectesResponse.ok) {
+                const errorData = await pointsCollectesResponse.json().catch(() => ({}));
+                console.error('Points collecte error:', errorData);
+                throw new Error(errorData.error || 'Failed to save points collecte');
             }
 
             // Update collecte status to completed
@@ -228,25 +285,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(errorData.error || 'Failed to update collecte status');
             }
 
+            // Update local userData with new points
+            userData.points_collectes = (userData.points_collectes || 0) + pointsCollectes;
+            sessionStorage.setItem('userData', JSON.stringify(userData));
+
             // Close popup and reload data
             closeResultsPopup();
             await loadCollectes(); // Wait for data to reload
             
-            alert('Résultats enregistrés avec succès!');
+            alert(`Bien joué ! Vous avez gagné ${pointsCollectes} points !\nVous avez maintenant ${userData.points_collectes} points !`);
         } catch (error) {
             console.error('Error saving results:', error);
             alert('Erreur lors de l\'enregistrement des résultats: ' + error.message);
         }
     });
-
-    // Waste types data (imported from dashboard.js)
-    const wasteTypes = [
-        { type: 'Mégot de cigarette', icon: '🚬', quantity: 0 },
-        { type: 'Emballage plastique', icon: '🥤', quantity: 0 },
-        { type: 'Bouteille de verre', icon: '🍾', quantity: 0 },
-        { type: 'Article de pêche', icon: '🎣', quantity: 0 },
-        { type: 'Déchet métallique', icon: '🥫', quantity: 0 },
-    ];
 
     // Function to create waste input cards
     function createWasteInputCards() {
@@ -254,7 +306,16 @@ document.addEventListener('DOMContentLoaded', () => {
         container.innerHTML = '';
 
         wasteTypes.forEach(waste => {
-            const inputId = waste.type.toLowerCase().replace(/\s+/g, '-');
+            // API returns {id, name, icon, score}, not {type, icon}
+            const wasteName = waste.name || waste.type;
+            
+            // Skip if wasteName is undefined or null
+            if (!wasteName) {
+                console.warn('Skipping waste with undefined name:', waste);
+                return;
+            }
+            
+            const inputId = wasteName.toLowerCase().replace(/\s+/g, '-');
             const card = document.createElement('div');
             card.className = 'waste-card';
             card.innerHTML = `
