@@ -126,6 +126,7 @@ function initializeSearchListeners() {
 function openCollecteDetails(collecte) {
     const popup = document.getElementById('collecteDetailsPopup');
     const isParticipating = collecte.participants && collecte.participants.includes(currentUserId);
+    const collecteName = collecte.name || `Collecte du ${formatDateShort(collecte.date)} à ${collecte.ville}`;
 
     // Update popup content
     document.getElementById('collecte-title').textContent = collecteName;

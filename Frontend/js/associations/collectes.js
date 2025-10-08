@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
             selectElement.innerHTML = '<option value="">Sélectionner une ville</option>';
             villes.forEach(ville => {
                 const option = document.createElement('option');
-                option.value = ville.id; // Use ID as value
+                option.value = String(ville.id); // Use ID as value
                 option.textContent = ville.name;
                 selectElement.appendChild(option);
             });
@@ -267,18 +267,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Populate location select dropdown
         const locationSelect = document.getElementById('profile-collecte-location');
-        await populateLocationSelect(locationSelect);
-        
-        // Set selected ville using id_ville if available, otherwise try to match by name
-        if (collecte.id_ville) {
-            locationSelect.value = collecte.id_ville;
-        } else {
-            // Fallback: try to find by ville name
-            const options = Array.from(locationSelect.options);
-            const matchingOption = options.find(opt => opt.textContent === collecte.ville);
-            if (matchingOption) {
-                locationSelect.value = matchingOption.value;
-                currentCollecteVilleId = matchingOption.value;
+        if (locationSelect) {
+            await populateLocationSelect(locationSelect);
+            // Set selected city
+            if (collecte.id_ville) {
+                locationSelect.value = String(collecte.id_ville);
             }
         }
 

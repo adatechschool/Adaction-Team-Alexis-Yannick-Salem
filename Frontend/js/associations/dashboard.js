@@ -119,12 +119,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!wasteGrid) return;
 
         wasteGrid.innerHTML = '';
+        console.log('wastesToDisplay:', wastesToDisplay);
         wastesToDisplay.forEach(waste => {
             const card = document.createElement('div');
             card.className = 'waste-card';
             card.innerHTML = `
                 <div class="waste-icon">${waste.icon}</div>
                 <h3 class="waste-type">${waste.dechet_name}</h3>
+                <p class="waste-date">${formatDate(waste.date)}</p>
+                <p class="waste-city">${waste.ville_name}</p>
                 <p class="waste-quantity">${waste.total_dechet}</p>
             `;
             wasteGrid.appendChild(card);
