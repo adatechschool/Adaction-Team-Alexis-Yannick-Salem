@@ -171,5 +171,17 @@ router.patch("/:id", async (req, res) => {
   }
 });
 
+// Déconnexion d'une association
+
+router.post('/logout', async(req,res)=>{
+  try {
+    res.status(200).json({message: "Déconnexion réussie"})
+  } catch (error) {
+    console.error("Erreur lors de la déconnexion :", error);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+  
+})
+
 
 export default router;
