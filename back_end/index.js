@@ -1,11 +1,13 @@
 import express from "express";
 import cors from "cors";
 
+import authRouter from "./routes/auth_controle.js"
 import associationsRouter from "./routes/associations_controle.js"
 import benevoleRouter from "./routes/benevoles_controle.js"
-import villeRouter from "./routes/ville_controle.js"
+import collectsRouter from "./routes/collects_controle.js"
 import dechetsRouter from "./routes/dechets_controle.js"
-import authRouter from "./routes/auth_controle.js"
+import dechetsCollectesRouter from "./routes/dechets_collectes_controle.js"
+import villeRouter from "./routes/ville_controle.js"
 
 const app = express();
 app.use(cors());
@@ -19,11 +21,13 @@ app.get("/", (req, res) => {
 });
 
 // Route get associations
+app.use('/auth', authRouter)
 app.use('/associations', associationsRouter);
 app.use('/benevole', benevoleRouter);
-app.use('/ville', villeRouter);
+app.use('/collectes', collectsRouter);
 app.use('/dechets', dechetsRouter);
-app.use('/auth', authRouter)
+app.use('/dechets-collectes', dechetsCollectesRouter);
+app.use('/ville', villeRouter);
 
 app.use((req,res)=> res.status(404).json({error:"Route introuvable"}))
 

@@ -76,6 +76,10 @@
                     <input type="text" id="username" name="username" required>
                 </div>
                 <div class="form-group">
+                    <label for="password">Mot de passe</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <div class="form-group">
                     <label for="first_name">Prénom</label>
                     <input type="text" id="first_name" name="first_name" required>
                 </div>
@@ -86,9 +90,9 @@
                 <div class="form-group">
                     <label for="city">Ville</label>
                     <div class="city-search-container">
-                        <input type="text" id="citySearch" name="citySearch" placeholder="Rechercher une ville..." autocomplete="off">
-                        <input type="hidden" id="city" name="city" required>
-                        <div id="cityResults" class="city-results"></div>
+                        <select id="benevole-city" name="location" required>
+                            <option value="">Sélectionner une ville</option>
+                        </select>
                     </div>
                 </div>
                 <div class="popup-actions">
@@ -131,9 +135,9 @@
                 <div class="form-group">
                     <div class="city-search-container">
                         <label for="profile-citySearch">Ville</label>
-                        <input type="text" id="profile-citySearch" name="citySearch" placeholder="Rechercher une ville..." autocomplete="off">
-                        <input type="hidden" id="profile-city" name="city" required>
-                        <div id="profile-cityResults" class="city-results"></div>
+                        <select id="profile-benevole-city" name="location" required>
+                            <option value="">Sélectionner une ville</option>
+                        </select>
                     </div>
                 </div>
                 <div class="form-group points-group">
@@ -162,10 +166,6 @@
                 </div>
             </div>
             <form id="addCollecteForm">
-                <div class="form-group">
-                    <label for="collecte-name">Nom de la collecte</label>
-                    <input type="text" id="collecte-name" name="name" required>
-                </div>
                 <div class="form-row">
                     <div class="form-group half">
                         <label for="collecte-date">Date</label>
@@ -178,17 +178,15 @@
                 </div>
                 <div class="form-group">
                     <label for="collecte-location">Lieu</label>
-                    <input type="text" id="collecte-location" name="location" required>
+                    <select id="collecte-location" name="location" required>
+                        <option value="">Sélectionner un lieu</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label for="collecte-responsable">Bénévole Responsable</label>
                     <select id="collecte-responsable" name="responsable" required>
                         <option value="">Sélectionner un bénévole</option>
                     </select>
-                </div>
-                <div class="form-group">
-                    <label for="collecte-description">Description</label>
-                    <textarea id="collecte-description" name="description" rows="3" required></textarea>
                 </div>
                 <div class="popup-actions">
                     <button type="submit" class="action-btn">Ajouter</button>
@@ -224,7 +222,9 @@
                 </div>
                 <div class="form-group">
                     <label for="profile-collecte-location">Lieu</label>
-                    <input type="text" id="profile-collecte-location" name="location" required>
+                    <select id="profile-collecte-location" name="location" required>
+                        <option value="">Sélectionner une ville</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label for="profile-collecte-responsable">Bénévole Responsable</label>
@@ -232,20 +232,12 @@
                         <option value="">Sélectionner un bénévole</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label for="profile-collecte-description">Description</label>
-                    <textarea id="profile-collecte-description" name="description" rows="3" required></textarea>
-                </div>
                 <div class="collecte-status">
                     <h3>État de la collecte</h3>
                     <div class="status-info">
                         <div class="status-item">
                             <span class="status-label">Statut:</span>
                             <span class="status-value" id="collecte-status">À venir</span>
-                        </div>
-                        <div class="status-item">
-                            <span class="status-label">Bénévoles inscrits:</span>
-                            <span class="status-value" id="collecte-participants">0</span>
                         </div>
                     </div>
                 </div>
@@ -255,7 +247,6 @@
                         <div class="result-item">
                             <span class="result-label">Déchets collectés:</span>
                             <input type="number" id="collecte-waste" name="waste" class="result-input" readonly>
-                            <span class="unit">kg</span>
                         </div>
                         <div class="result-item">
                             <span class="result-label">Points distribués:</span>

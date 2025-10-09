@@ -16,43 +16,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Mock data for testing - Replace with actual API calls
-    const wasteTypes = [
-        { type: 'Mégots de cigarette', icon: '🚬', quantity: 0 },
-        { type: 'Emballages plastiques', icon: '🥤', quantity: 0 },
-        { type: 'Bouteilles de verre', icon: '🍾', quantity: 0 },
-        { type: 'Articles de pêche dégradés', icon: '🎣', quantity: 0 },
-        { type: 'Déchets métalliques', icon: '🥫', quantity: 0 },
-    ];
 
-    const mockCollectes = [
-        {
-            id: 1,
-            title: "Collecte Centre-ville",
-            date: "2024-02-15T14:00:00",
-            location: "Place de la République",
-            responsable: "Marie Dubois",
-            status: "upcoming",
-            participants: ["user123"]
-        },
-        {
-            id: 2,
-            title: "Collecte Parc Municipal",
-            date: "2024-02-10T10:00:00",
-            location: "Parc de la Ville",
-            responsable: "Jean Martin",
-            status: "completed",
-            participants: ["user123"],
-            results: {
-                'Mégots de cigarette': { value: 150, icon: '🚬' },
-                'Emballages plastiques': { value: 5.2, icon: '🥤' },
-                'Bouteilles de verre': { value: 3.1, icon: '🍾' },
-                'Articles de pêche dégradés': { value: 1.5, icon: '🎣' },
-                'Déchets métalliques': { value: 2.8, icon: '🥫' }
-            }
-        }
-    ];
-
+    function formatDateShort(date) {
+        const options = { month: 'short', day: 'numeric' };
+        return new Date(date).toLocaleDateString('fr-FR', options);
+    }
     // Current user ID (mock) - Replace with actual user authentication
     const currentUserId = "user123";
 
@@ -81,9 +49,11 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeSearchListeners();
 
 // Load and display collectes
-function loadCollectes() {
-    const upcomingCollectes = mockCollectes.filter(c => c.status === 'upcoming');
-    const pastCollectes = mockCollectes.filter(c => c.status === 'completed');
+async function loadCollectes() {
+    const res = await fetch('http://192.168.7.103:3000/collectes');
+    const collectes = await res.json();
+    const upcomingCollectes = collectes.filter(c => c.status === 'À venir');
+    const pastCollectes = collectes.filter(c => c.status === 'Terminée');
 
     displayCollectes(upcomingCollectes, upcomingSection.querySelector('.collectes-cards'));
     displayCollectes(pastCollectes, historySection.querySelector('.collectes-cards'));
@@ -101,13 +71,14 @@ function displayCollectes(collectes, container) {
 
 function createCollecteCard(collecte) {
     const card = document.createElement('div');
+    const collecteName = collecte.name || `Collecte du ${formatDateShort(collecte.date)} à ${collecte.ville}`;
     card.className = 'collecte-card';
     card.innerHTML = `
         <div class="collecte-info">
-            <h3 class="collecte-name">${collecte.title}</h3>
+            <h3 class="collecte-name">${collecteName}</h3>
             <span class="collecte-datetime">${formatDate(collecte.date)}</span>
-            <span class="collecte-location">${collecte.location}</span>
-            <span class="collecte-responsable">${collecte.responsable}</span>
+            <span class="collecte-location">${collecte.ville}</span>
+            <span class="collecte-responsable">${collecte.first_name} ${collecte.last_name}</span>
         </div>
         <div class="card-actions">
             <button type="button" class="action-btn view-btn">Voir détails</button>
@@ -120,11 +91,12 @@ function createCollecteCard(collecte) {
 function createCompletedCollecteCard(collecte) {
     const card = document.createElement('div');
     card.className = 'collecte-card';
+    const collecteName = collecte.name || `Collecte du ${formatDateShort(collecte.date)} à ${collecte.ville}`;
     card.innerHTML = `
         <div class="collecte-info">
-            <h3 class="collecte-name">${collecte.title}</h3>
+            <h3 class="collecte-name">${collecteName}</h3>
             <span class="collecte-datetime">${formatDate(collecte.date)}</span>
-            <span class="collecte-location">${collecte.location}</span>
+            <span class="collecte-location">${collecte.ville}</span>
         </div>
         <div class="card-actions">
             <button type="button" class="action-btn view-btn">Voir détails</button>
@@ -153,17 +125,18 @@ function initializeSearchListeners() {
 // Collecte details popup
 function openCollecteDetails(collecte) {
     const popup = document.getElementById('collecteDetailsPopup');
-    const isParticipating = collecte.participants.includes(currentUserId);
+    const isParticipating = collecte.participants && collecte.participants.includes(currentUserId);
+    const collecteName = collecte.name || `Collecte du ${formatDateShort(collecte.date)} à ${collecte.ville}`;
 
     // Update popup content
-    document.getElementById('collecte-title').textContent = collecte.title;
+    document.getElementById('collecte-title').textContent = collecteName;
     document.getElementById('collecte-datetime').textContent = formatDate(collecte.date);
-    document.getElementById('details-location').value = collecte.location;
-    document.getElementById('details-responsable').value = collecte.responsable;
+    document.getElementById('details-location').value = collecte.ville;
+    document.getElementById('details-responsable').value = `${collecte.first_name} ${collecte.last_name}`;
 
     // Update participation status
     const statusDiv = document.getElementById('participation-status');
-    if (collecte.status === 'completed') {
+    if (collecte.status === 'Terminée') {
         statusDiv.className = 'status-info completed';
         statusDiv.textContent = 'Collecte terminée';
         document.getElementById('participateBtn').style.display = 'none';
@@ -178,10 +151,11 @@ function openCollecteDetails(collecte) {
 
     // Show/hide waste results
     const wasteResults = document.getElementById('waste-results');
-    if (collecte.status === 'completed' && collecte.results) {
+    if (collecte.status === 'Terminée' && collecte.results) {
         wasteResults.style.display = 'block';
         const wasteCards = wasteResults.querySelector('.waste-cards');
-        wasteCards.innerHTML = Object.entries(collecte.results)
+        const results = typeof collecte.results === 'string' ? JSON.parse(collecte.results) : collecte.results;
+        wasteCards.innerHTML = Object.entries(results)
             .map(([type, {value, icon}]) => `
                 <div class="waste-card">
                     <span class="waste-icon">${icon}</span>

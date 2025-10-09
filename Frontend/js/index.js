@@ -6,6 +6,43 @@ document.addEventListener('DOMContentLoaded', () => {
     const signupForm = document.getElementById('signup-form');
     const signupCity = document.getElementById('signup-city');
     const citiesList = document.getElementById('cities-list');
+    
+    // Store city ID mapping
+    let cityMap = new Map(); // Maps city name to city ID
+
+    // Handle signup type switching
+    const signupTypeBtns = document.querySelectorAll('.signup-tab-btn');
+    const signupSections = document.querySelectorAll('.signup-section');
+
+    signupTypeBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const signupType = btn.dataset.signup;
+            
+            // Update active states
+            signupTypeBtns.forEach(b => b.classList.remove('active'));
+            signupSections.forEach(s => {
+                s.classList.remove('active');
+                // Disable required on hidden sections
+                s.querySelectorAll('input[required]').forEach(input => {
+                    input.removeAttribute('required');
+                });
+            });
+            
+            btn.classList.add('active');
+            const activeSection = document.getElementById(`${signupType}-signup`);
+            activeSection.classList.add('active');
+            
+            // Enable required on active section
+            activeSection.querySelectorAll('input').forEach(input => {
+                if (input.type !== 'submit') {
+                    input.setAttribute('required', '');
+                }
+            });
+
+            // Clear form fields when switching
+            clearForm(signupForm);
+        });
+    });
 
     // Function to clear form fields
     function clearForm(form) {
@@ -20,6 +57,11 @@ document.addEventListener('DOMContentLoaded', () => {
     clearForm(loginForm);
     clearForm(signupForm);
     citiesList.innerHTML = '';
+    
+    // Initialize required attributes - disable on hidden section
+    document.getElementById('association-signup').querySelectorAll('input').forEach(input => {
+        input.removeAttribute('required');
+    });
 
     // Clear forms when switching tabs
     tabButtons.forEach(button => {
@@ -55,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (query.length < 3) return [];
         
         try {
-            const response = await fetch(`https://geo.api.gouv.fr/communes?nom=${query}&limit=5`);
+            const response = await fetch(`http://192.168.7.103:3000/ville?nom=${query}&limit=5`);
             const cities = await response.json();
             return cities;
         } catch (error) {
@@ -67,10 +109,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update datalist options
     function updateCityOptions(cities) {
         citiesList.innerHTML = '';
+        cityMap.clear(); // Clear previous mappings
         cities.forEach(city => {
             const option = document.createElement('option');
-            option.value = `${city.nom} (${city.codeDepartement})`;
+            option.value = city.name;
+            option.dataset.cityId = city.id; // Store ID in data attribute
             citiesList.appendChild(option);
+            // Store in map for easy lookup
+            cityMap.set(city.name, city.id);
         });
     }
 
@@ -100,82 +146,61 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Mock user database (replace with actual backend authentication)
-    const mockUsers = {
-        associations: [
-            { username: 'ecoasso', password: 'password123', name: 'EcoAssociation' }
-        ],
-        benevoles: [
-            { username: 'benevolej', password: 'password123', name: 'Jean' }
-        ]
-    };
 
     // Handle login form submission
-    loginForm.addEventListener('submit', (e) => {
+    loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const username = document.getElementById('login-username').value;
         const password = document.getElementById('login-password').value;
 
-        // Check in associations
-        const associationUser = mockUsers.associations.find(user => 
-            user.username === username && user.password === password
-        );
+        try {
+            const response = await fetch('http://192.168.7.103:3000/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, password })
+            });
 
-        if (associationUser) {
-            // Store user info if needed
-            sessionStorage.setItem('userType', 'association');
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Erreur lors de la connexion');
+            }
+
+            // Determine user type based on response data
+            // If sigle exists, it's an association, otherwise it's a benevole
+            const userType = data.sigle ? 'association' : 'benevole';
+
+            // Store user info in session
+            sessionStorage.setItem('userType', userType);
             sessionStorage.setItem('username', username);
-            window.location.href = '/associations/dashboard';
-            return;
+            sessionStorage.setItem('userData', JSON.stringify(data));
+
+            // Redirect based on user type - use replace to prevent back button issues
+            if (userType === 'association') {
+                window.location.replace('/associations/dashboard');
+            } else {
+                window.location.replace('/benevoles/today');
+            }
+
+        } catch (error) {
+            console.error('Login error:', error);
+            alert(error.message || 'Nom d\'utilisateur ou mot de passe incorrect');
         }
-
-        // Check in benevoles
-        const benevoleUser = mockUsers.benevoles.find(user => 
-            user.username === username && user.password === password
-        );
-
-        if (benevoleUser) {
-            // Store user info if needed
-            sessionStorage.setItem('userType', 'benevole');
-            sessionStorage.setItem('username', username);
-            window.location.href = '/benevoles/today';
-            return;
-        }
-
-        // If no user found
-        alert('Nom d\'utilisateur ou mot de passe incorrect');
-    });
-
-    // Handle signup type switching
-    const signupTypeBtns = document.querySelectorAll('.signup-tab-btn');
-    const signupSections = document.querySelectorAll('.signup-section');
-
-    signupTypeBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const signupType = btn.dataset.signup;
-            
-            // Update active states
-            signupTypeBtns.forEach(b => b.classList.remove('active'));
-            signupSections.forEach(s => s.classList.remove('active'));
-            
-            btn.classList.add('active');
-            document.getElementById(`${signupType}-signup`).classList.add('active');
-
-            // Clear form fields when switching
-            clearForm(signupForm);
-        });
     });
 
     // Handle signup form submission
-    signupForm.addEventListener('submit', (e) => {
+    signupForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const activeSection = document.querySelector('.signup-section.active');
         const formType = activeSection.querySelector('.submit-btn').dataset.type;
 
         if (formType === 'benevole') {
             const name = document.getElementById('signup-name').value;
+            const lastName = document.getElementById('signup-last-name').value;
             const username = document.getElementById('signup-username').value;
-            const city = document.getElementById('signup-city').value;
+            const cityName = document.getElementById('signup-city').value;
             const password = document.getElementById('signup-password').value;
             const confirmPassword = document.getElementById('signup-confirm-password').value;
 
@@ -183,26 +208,50 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('Les mots de passe ne correspondent pas!');
                 return;
             }
-
-            // Check if username already exists
-            if (mockUsers.benevoles.some(user => user.username === username) ||
-                mockUsers.associations.some(user => user.username === username)) {
-                alert('Ce nom d\'utilisateur est déjà pris');
+            
+            // Get city ID from the map
+            const cityId = cityMap.get(cityName);
+            if (!cityId) {
+                alert('Veuillez sélectionner une ville valide de la liste');
                 return;
             }
 
-            // Add new user to mock database (replace with actual backend call)
-            mockUsers.benevoles.push({
-                username,
-                password,
-                name,
-                city
-            });
+            try {
+                const response = await fetch('http://192.168.7.103:3000/benevole/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username,
+                        password,
+                        first_name: name,
+                        last_name: lastName,
+                        id_ville: cityId // Now sending the actual ID
+                    })
+                });
 
-            // Store user info and redirect
-            sessionStorage.setItem('userType', 'benevole');
-            sessionStorage.setItem('username', username);
-            window.location.href = '/benevoles/today';
+                // Check if response is JSON
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error('Le serveur n\'a pas renvoyé une réponse JSON valide');
+                }
+
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Erreur lors de l\'inscription');
+                }
+
+                // Store user info and redirect
+                sessionStorage.setItem('userType', 'benevole');
+                sessionStorage.setItem('username', username);
+                sessionStorage.setItem('userData', JSON.stringify(data));
+                window.location.replace('/benevoles/today');
+            } catch (error) {
+                console.error('Signup error:', error);
+                alert(error.message || 'Erreur lors de l\'inscription. Veuillez réessayer.');
+            }
         } else {
             const name = document.getElementById('signup-asso-name').value;
             const sigle = document.getElementById('signup-asso-sigle').value;
@@ -214,26 +263,41 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('Les mots de passe ne correspondent pas!');
                 return;
             }
+            try {
+                const response = await fetch('http://192.168.7.103:3000/associations/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username,
+                        password,
+                        name,
+                        sigle
+                    })
+                });
 
-            // Check if username already exists
-            if (mockUsers.benevoles.some(user => user.username === username) ||
-                mockUsers.associations.some(user => user.username === username)) {
-                alert('Ce nom d\'utilisateur est déjà pris');
-                return;
+                // Check if response is JSON
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error('Le serveur n\'a pas renvoyé une réponse JSON valide');
+                }
+
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Erreur lors de l\'inscription');
+                }
+
+                // Store user info and redirect
+                sessionStorage.setItem('userType', 'association');
+                sessionStorage.setItem('username', username);
+                sessionStorage.setItem('userData', JSON.stringify(data));
+                window.location.replace('/associations/dashboard');
+            } catch (error) {
+                console.error('Signup error:', error);
+                alert(error.message || 'Erreur lors de l\'inscription. Veuillez réessayer.');
             }
-
-            // Add new user to mock database (replace with actual backend call)
-            mockUsers.associations.push({
-                username,
-                password,
-                name,
-                sigle
-            });
-
-            // Store user info and redirect
-            sessionStorage.setItem('userType', 'association');
-            sessionStorage.setItem('username', username);
-            window.location.href = '/associations/dashboard';
         }
     });
 });

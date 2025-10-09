@@ -37,20 +37,45 @@
                 <div class="stats-grid">
                     <div class="stat-card">
                         <h3>Bénévoles Actifs</h3>
-                        <p class="stat-number">0</p>
+                        <p class="stat-number" id="benevole-stat">0</p>
                     </div>
                     <div class="stat-card">
                         <h3>Collectes Réalisées</h3>
-                        <p class="stat-number">0</p>
+                        <p class="stat-number" id="collecte-stat">0</p>
                     </div>
                     <div class="stat-card">
                         <h3>Déchets Collectés</h3>
-                        <p class="stat-number">0</p>
+                        <p class="stat-number" id="dechet-stat">0</p>
                     </div>
                 </div>
             </div>
 
             <div id="wastes-section" class="dashboard-section">
+                <div class="waste-filters">
+                    <div class="filter-group">
+                        <label for="waste-name-filter">Type de déchet:</label>
+                        <select id="waste-name-filter" class="filter-input">
+                            <option value="">Tous les types</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="city-filter">Ville:</label>
+                        <select id="city-filter" class="filter-input">
+                            <option value="">Toutes les villes</option>
+                        </select>
+                    </div>
+                    <div class="filter-biggroup">
+                        <div class="filter-group">
+                            <label for="date-start">Date début:</label>
+                            <input type="date" id="date-start" class="filter-input">
+                        </div>
+                        <div class="filter-group">
+                            <label for="date-end">Date fin:</label>
+                            <input type="date" id="date-end" class="filter-input">
+                        </div>
+                    </div>
+                    
+                </div>
                 <div class="waste-stats-grid">
                     <!-- Waste type cards will be dynamically inserted here -->
                 </div>
