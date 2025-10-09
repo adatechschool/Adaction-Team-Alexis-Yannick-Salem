@@ -123,9 +123,31 @@ function initializeSearchListeners() {
 }
 
 // Collecte details popup
-function openCollecteDetails(collecte) {
+async function openCollecteDetails(collecte) {
     const popup = document.getElementById('collecteDetailsPopup');
-    const isParticipating = collecte.participants && collecte.participants.includes(currentUserId);
+    
+    // Get current benevole ID from sessionStorage
+    const userData = JSON.parse(sessionStorage.getItem('userData') || '{}');
+    const benevoleId = userData.id;
+    
+    if (!benevoleId) {
+        console.error('No benevole ID found in session');
+        alert('Erreur: Veuillez vous reconnecter');
+        return;
+    }
+
+    // Check if benevole is registered for this collecte
+    let isParticipating = false;
+    try {
+        const checkResponse = await fetch(`http://192.168.7.103:3000/dechets-collectes/check-registration/${collecte.id}/${benevoleId}`);
+        if (checkResponse.ok) {
+            const checkData = await checkResponse.json();
+            isParticipating = checkData.isRegistered;
+        }
+    } catch (error) {
+        console.error('Error checking registration:', error);
+    }
+
     const collecteName = collecte.name || `Collecte du ${formatDateShort(collecte.date)} à ${collecte.ville}`;
 
     // Update popup content
@@ -146,7 +168,7 @@ function openCollecteDetails(collecte) {
         const participateBtn = document.getElementById('participateBtn');
         participateBtn.style.display = '';
         participateBtn.textContent = isParticipating ? 'Se désinscrire' : 'Participer à la collecte';
-        participateBtn.onclick = () => toggleParticipation(collecte.id, isParticipating);
+        participateBtn.onclick = () => toggleParticipation(collecte.id, isParticipating, benevoleId);
     }
 
     // Show/hide waste results
@@ -178,22 +200,53 @@ function closeDetailsPopup() {
 }
 
 // Toggle participation in a collecte
-function toggleParticipation(collecteId, currentlyParticipating) {
-    // Here you would make an API call to update participation
-    console.log(`${currentlyParticipating ? 'Removing' : 'Adding'} participation for collecte ${collecteId}`);
-    
-    // Mock update UI
-    const statusDiv = document.getElementById('participation-status');
-    const participateBtn = document.getElementById('participateBtn');
-    
-    if (currentlyParticipating) {
-        statusDiv.className = 'status-info not-participating';
-        statusDiv.textContent = 'Vous ne participez pas encore à cette collecte';
-        participateBtn.textContent = 'Participer à la collecte';
-    } else {
-        statusDiv.className = 'status-info participating';
-        statusDiv.textContent = 'Vous participez à cette collecte';
-        participateBtn.textContent = 'Se désinscrire';
+async function toggleParticipation(collecteId, currentlyParticipating, benevoleId) {
+    try {
+        if (currentlyParticipating) {
+            // Unregister from collecte
+            const response = await fetch(`http://192.168.7.103:3000/dechets-collectes/unregister/${collecteId}/${benevoleId}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Erreur lors de la désinscription');
+            }
+
+            const data = await response.json();
+            console.log('Désinscription réussie:', data.message);
+            alert('Vous avez été désinscrit de cette collecte');
+            
+        } else {
+            // Register for collecte
+            const response = await fetch('http://192.168.7.103:3000/dechets-collectes/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    id_collecte: collecteId,
+                    id_benevole: benevoleId
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Erreur lors de l\'inscription');
+            }
+
+            const data = await response.json();
+            console.log('Inscription réussie:', data.message);
+            alert('Vous avez été inscrit à cette collecte');
+        }
+
+        // Close popup and reload collectes to reflect changes
+        closeDetailsPopup();
+        await loadCollectes();
+
+    } catch (error) {
+        console.error('Error toggling participation:', error);
+        alert(`Erreur: ${error.message}`);
     }
 }
 

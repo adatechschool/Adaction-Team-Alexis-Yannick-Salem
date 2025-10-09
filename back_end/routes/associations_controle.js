@@ -51,8 +51,10 @@ router.post("/signup", async (req, res) => {
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     const reslt = await db.query(
-      `INSERT INTO associations (username, password, sigle,name, date_creation)
-      VALUES ('${username}', '${hashedPassword}','${sigle}' ,'${name}', current_timestamp)`
+      `INSERT INTO associations (username, password, sigle, name, date_creation)
+      VALUES ($1, $2, $3, $4, current_timestamp)
+      RETURNING id, username, name, sigle`,
+      [username, hashedPassword, sigle, name]
     );
     res.status(201).json(reslt.rows[0]);
   } catch (error) {

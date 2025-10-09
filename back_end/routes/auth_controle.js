@@ -25,6 +25,7 @@ router.post("/login", async (req, res) => {
           return res.status(400).json({ error: "mot de passe invalide" });
         } else {
           return res.status(200).json({
+            id: user.id,
             first_name: user.first_name,
             username: user.username,
             last_name: user.last_name,
@@ -44,6 +45,7 @@ router.post("/login", async (req, res) => {
           return res.status(400).json({ error: "mot de passe invalide" });
         } else {
           return res.status(200).json({
+            id: user.id,
             name: user.name,
             username: user.username,
             sigle: user.sigle,

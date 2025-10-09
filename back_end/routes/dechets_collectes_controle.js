@@ -166,4 +166,32 @@ router.get("/check-registration/:id_collecte/:id_benevole", async (req, res) => 
   }
 });
 
+// Unregister a benevole from a collecte
+router.delete("/unregister/:id_collecte/:id_benevole", async (req, res) => {
+  try {
+    const { id_collecte, id_benevole } = req.params;
+
+    if (!id_collecte || !id_benevole) {
+      return res.status(400).json({ error: "id_collecte et id_benevole sont requis" });
+    }
+
+    // Delete registration (only rows with null dechet_id, which are placeholder registrations)
+    const result = await db.query(
+      `DELETE FROM dechets_collectes 
+       WHERE id_collecte = $1 AND id_benevole = $2 AND dechet_id IS NULL
+       RETURNING *`,
+      [id_collecte, id_benevole]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Inscription non trouvée ou collecte déjà complétée" });
+    }
+
+    res.status(200).json({ message: "Désinscription réussie", data: result.rows[0] });
+  } catch (error) {
+    console.error("Erreur lors de la désinscription:", error);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
 export default router;
